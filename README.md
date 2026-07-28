@@ -37,12 +37,15 @@ parecer um programa desktop.
 - Documentos gerados: `server/data/documentos/{numero_os}/`.
 - Fazer backup = copiar a pasta `server/data`.
 
-## Build de produção
+## Build de produção / uso na loja (Windows)
 
 ```bash
 npm run build
-npm run --workspace server start   # serve a API
+npm run --workspace server start
 ```
 
-Sirva os arquivos estáticos de `web/dist` com o servidor de sua preferência
-(ou configure o Express para servi-los também).
+O `server` compilado já serve o frontend (`web/dist`) na mesma porta —
+um processo só, `http://localhost:4000`. Para o computador da loja, os
+scripts `instalar.bat` (rodar uma vez) e `iniciar.bat` (uso diário) na
+raiz do repositório fazem exatamente isso automaticamente — instruções
+em `LEIA-ME.txt`.
