@@ -17,6 +17,15 @@ if %errorlevel% neq 0 (
   exit /b 1
 )
 
+node -e "require('node:sqlite')" >nul 2>nul
+if %errorlevel% neq 0 (
+  echo ERRO: a versao do Node.js instalada e antiga demais para este programa.
+  echo Baixe uma versao mais recente ^(22 ou superior^) em https://nodejs.org e instale por cima.
+  echo.
+  pause
+  exit /b 1
+)
+
 echo Instalando dependencias ^(pode demorar alguns minutos na primeira vez^)...
 call npm install
 if %errorlevel% neq 0 (

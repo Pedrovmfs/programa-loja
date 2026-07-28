@@ -1,4 +1,4 @@
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,13 +13,17 @@ if (!existsSync(DOCS_DIR)) mkdirSync(DOCS_DIR, { recursive: true });
 
 export const dbPath = path.join(dataDir, "pedidos.db");
 
-export const db = new Database(dbPath);
+// Uses Node's built-in SQLite (node:sqlite) instead of a native addon like
+// better-sqlite3: it ships inside the Node.js binary itself, so installing
+// on a store PC never requires compiling anything (no Python/Visual Studio
+// Build Tools) — just `npm install`.
+export const db = new DatabaseSync(dbPath);
 
 // WAL mode gives better read/write concurrency; correctness of the OS-number
 // sequence comes from wrapping the increment in a BEGIN IMMEDIATE transaction
 // (see services/numbering.ts), not from the journal mode itself.
-db.pragma("journal_mode = WAL");
-db.pragma("foreign_keys = ON");
+db.exec("PRAGMA journal_mode = WAL");
+db.exec("PRAGMA foreign_keys = ON");
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS counters (

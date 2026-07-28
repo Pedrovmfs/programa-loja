@@ -7,10 +7,14 @@ Capa-Resumo.
 
 ## Arquitetura
 
-- **server/** — Node + TypeScript + Express + `better-sqlite3`. Único
-  processo dono do banco SQLite (`server/data/pedidos.db`) e dos documentos
+- **server/** — Node + TypeScript + Express + `node:sqlite` (SQLite embutido
+  no próprio Node.js — sem addon nativo, sem compilação no `npm install`).
+  Único processo dono do banco (`server/data/pedidos.db`) e dos documentos
   gerados (`server/data/documentos/`). Gera os `.docx` com a lib `docx`.
 - **web/** — React + Vite. Fala com o backend via `/api/*`.
+
+Requer Node.js **22.5+** (idealmente 22 LTS ou mais recente) — é a partir
+dessa versão que o módulo `node:sqlite` está disponível.
 
 Numeração de OS: atribuída no momento de "Gerar Documentos", dentro de uma
 transação `BEGIN IMMEDIATE` (ver `server/src/services/numbering.ts`) — o
