@@ -12,6 +12,10 @@ Capa-Resumo.
   Único processo dono do banco (`server/data/pedidos.db`) e dos documentos
   gerados (`server/data/documentos/`). Gera os `.docx` com a lib `docx`.
 - **web/** — React + Vite. Fala com o backend via `/api/*`.
+- **desktop/** — shell Electron opcional: empacota tudo num app desktop de
+  verdade (sem terminal, sem tela preta) com modo rede (um computador
+  "principal" guarda os dados; os demais só se conectam a ele). Ver seção
+  própria abaixo.
 
 Requer Node.js **22.5+** (idealmente 22 LTS ou mais recente) — é a partir
 dessa versão que o módulo `node:sqlite` está disponível.
@@ -52,4 +56,42 @@ O `server` compilado já serve o frontend (`web/dist`) na mesma porta —
 um processo só, `http://localhost:4000`. Para o computador da loja, os
 scripts `instalar.bat` (rodar uma vez) e `iniciar.bat` (uso diário) na
 raiz do repositório fazem exatamente isso automaticamente — instruções
-em `LEIA-ME.txt`.
+em `LEIA-ME.txt`. Essa via ainda abre uma janela de terminal (mesmo que
+escondida atrás do navegador).
+
+## App desktop (Electron) — recomendado para o dia a dia da loja
+
+Resolve os dois incômodos da via acima: nenhuma janela preta de terminal
+aparece, e é um único `.exe` (sem `npm install` manual). Também é o que
+habilita várias telas da loja usando o mesmo pedido (modo rede).
+
+**Como funciona o modo rede**: na primeira vez que abre em cada
+computador, aparece uma tela perguntando se este é o **computador
+principal** (onde os pedidos ficam salvos — escolha isso no PC que fica
+sempre ligado) ou se vai **conectar a outro computador** (informa o nome/IP
+do principal, com botão "Testar Conexão" antes de continuar). Isso só
+aparece uma vez; depois o programa abre direto. Para reconfigurar depois,
+tem um menu "Configurações → Alterar modo de conexão" dentro do app.
+
+Importante: **só o computador "principal" precisa ter Node.js instalado**
+(mesmo pré-requisito do `instalar.bat`, é ele quem roda o backend de
+verdade por trás do Electron). Os computadores "cliente" não precisam de
+nada além do `.exe` — só enxergam a tela por rede.
+
+### Gerando o instalador Windows (.exe)
+
+Empacotar para Windows exige ferramentas específicas (rcedit via Wine) que
+só funcionam de forma confiável rodando num Windows de verdade — por isso
+o build roda automaticamente no GitHub Actions
+(`.github/workflows/build-desktop.yml`) toda vez que há push, ou sob
+demanda pela aba **Actions → Build Desktop (Windows) → Run workflow**. O
+`.exe` fica disponível para baixar como *artifact* do workflow ao final do
+build (portable + instalador NSIS).
+
+Para rodar/testar localmente durante o desenvolvimento (em qualquer SO):
+
+```bash
+npm run build                    # compila server + web
+npm run bundle --workspace desktop  # empacota o backend + copia o frontend
+npm run start --workspace desktop   # abre o app Electron
+```

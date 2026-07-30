@@ -12,3 +12,7 @@ server/data/documentos/
 
 .env
 .DS_Store
+
+# artefatos gerados do app desktop (bundle + instalador), não versionados
+desktop/resources/
+desktop/release/

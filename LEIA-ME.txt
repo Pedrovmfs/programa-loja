@@ -1,6 +1,13 @@
 ATTUAL CAMISETAS - PROGRAMA DE LANCAMENTO DE PEDIDOS
 =====================================================
 
+AVISO: se voce recebeu um arquivo unico ".exe" (em vez desta pasta com
+varios arquivos), ignore o restante deste texto - e so dar dois cliques
+nesse .exe, sem instalar nada. Esta pasta com instalar.bat/iniciar.bat e
+uma forma alternativa mais simples de gerar, usada durante o
+desenvolvimento.
+
+
 COMO INSTALAR (fazer uma unica vez neste computador):
 
 1. Instalar o Node.js, se ainda nao tiver: baixar em https://nodejs.org

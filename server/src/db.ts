@@ -3,9 +3,20 @@ import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// ATTUAL_DATA_DIR lets the Electron shell point this at a writable,
+// per-user location (app.getPath("userData")) instead of a folder next to
+// the code — needed because a packaged app's install folder isn't
+// guaranteed to be writable. Falls back to the plain "server/data" layout
+// used by npm run dev / the .bat scripts. The fallback is computed lazily
+// and defensively: when this file is bundled to CommonJS for Electron,
+// `import.meta.url` is stripped out by the bundler, so it must never be
+// evaluated unless ATTUAL_DATA_DIR is actually unset.
+function defaultDataDir(): string {
+  const dirname = path.dirname(fileURLToPath(import.meta.url));
+  return path.join(dirname, "..", "data");
+}
 
-const dataDir = path.join(__dirname, "..", "data");
+const dataDir = process.env.ATTUAL_DATA_DIR ?? defaultDataDir();
 if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
 
 export const DOCS_DIR = path.join(dataDir, "documentos");
