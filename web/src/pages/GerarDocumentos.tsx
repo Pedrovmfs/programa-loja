@@ -1,6 +1,9 @@
 import { useState } from "react";
+import { FileText, FileCheck } from "lucide-react";
 import { api, ApiError, FinalizarResponse } from "../api";
 import type { Item } from "../types";
+import { SectionTitle } from "../components/SectionTitle";
+import { EmptyState } from "../components/EmptyState";
 
 export function GerarDocumentos({
   pedidoId,
@@ -31,12 +34,18 @@ export function GerarDocumentos({
 
   return (
     <div className="card">
-      <h2>4. Gerar Documentos</h2>
+      <SectionTitle icon={FileText}>4. Gerar Documentos</SectionTitle>
       {error && <div className="alert error">{error}</div>}
-      {itens.length === 0 && <div className="empty-state">Adicione ao menos um item para gerar os documentos.</div>}
+      {itens.length === 0 && (
+        <EmptyState
+          icon={FileText}
+          title="Nenhum documento gerado ainda."
+          subtitle="Adicione ao menos um item para gerar os documentos."
+        />
+      )}
       <div className="actions-row">
         <button className="primary" disabled={disabled} onClick={handleClick}>
-          {saving ? "Gerando..." : "Gerar Documentos"}
+          <FileCheck size={16} /> {saving ? "Gerando..." : "Gerar Documentos"}
         </button>
       </div>
     </div>

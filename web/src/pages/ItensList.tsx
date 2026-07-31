@@ -1,6 +1,9 @@
 import { useState } from "react";
+import { ListChecks, Shirt } from "lucide-react";
 import { api, ApiError } from "../api";
 import type { Item } from "../types";
+import { SectionTitle } from "../components/SectionTitle";
+import { EmptyState } from "../components/EmptyState";
 
 function resumo(item: Item): string {
   if (item.categoria === "brinde") {
@@ -50,10 +53,14 @@ export function ItensList({
 
   return (
     <div className="card">
-      <h2>3. Itens do Pedido</h2>
+      <SectionTitle icon={ListChecks}>3. Itens do Pedido</SectionTitle>
       {error && <div className="alert error">{error}</div>}
       {itens.length === 0 ? (
-        <div className="empty-state">Nenhum item adicionado ainda.</div>
+        <EmptyState
+          icon={Shirt}
+          title="Nenhum item adicionado ainda."
+          subtitle="Adicione itens ao pedido usando o formulário acima."
+        />
       ) : (
         <table className="itens-table">
           <thead>

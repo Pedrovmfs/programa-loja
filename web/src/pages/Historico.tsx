@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import { History, FileText } from "lucide-react";
 import { api, ApiError } from "../api";
 import type { Pedido } from "../types";
+import { SectionTitle } from "../components/SectionTitle";
+import { EmptyState } from "../components/EmptyState";
 
 export function Historico() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
@@ -17,12 +20,12 @@ export function Historico() {
 
   return (
     <div className="card">
-      <h2>Histórico de Pedidos</h2>
+      <SectionTitle icon={History}>Histórico de Pedidos</SectionTitle>
       {error && <div className="alert error">{error}</div>}
       {loading ? (
         <div className="empty-state">Carregando...</div>
       ) : pedidos.length === 0 ? (
-        <div className="empty-state">Nenhum pedido lançado ainda.</div>
+        <EmptyState icon={FileText} title="Nenhum pedido lançado ainda." subtitle="Os pedidos finalizados aparecem aqui." />
       ) : (
         <table className="itens-table">
           <thead>

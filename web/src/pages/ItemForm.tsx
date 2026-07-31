@@ -1,6 +1,28 @@
 import { useState } from "react";
+import {
+  ClipboardList,
+  Shirt,
+  Gift,
+  CircleDot,
+  Layers,
+  Palette,
+  Droplet,
+  MoveHorizontal,
+  Square,
+  Sparkles,
+  MapPin,
+  Ruler,
+  Baby,
+  MessageSquare,
+  Plus,
+  Package,
+  Tag,
+  Hash,
+} from "lucide-react";
 import { api, ApiError } from "../api";
 import { CheckboxGroup } from "../components/CheckboxGroup";
+import { SectionTitle } from "../components/SectionTitle";
+import { FieldLabel } from "../components/FieldLabel";
 import type { Item } from "../types";
 import {
   VESTUARIO_MODELOS,
@@ -94,7 +116,7 @@ export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (it
 
   return (
     <form className="card" onSubmit={handleSubmit}>
-      <h2>2. Adicionar Item</h2>
+      <SectionTitle icon={ClipboardList}>2. Adicionar Item</SectionTitle>
       {error && <div className="alert error">{error}</div>}
 
       <div className="categoria-toggle">
@@ -104,7 +126,7 @@ export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (it
           className={categoria === "vestuario" ? "active" : ""}
           onClick={() => setCategoria("vestuario")}
         >
-          Vestuário (gera Ficha Técnica)
+          <Shirt size={16} /> Vestuário (gera Ficha Técnica)
         </button>
         <button
           type="button"
@@ -112,7 +134,7 @@ export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (it
           className={categoria === "brinde" ? "active" : ""}
           onClick={() => setCategoria("brinde")}
         >
-          Brinde (entra só no resumo)
+          <Gift size={16} /> Brinde (entra só no resumo)
         </button>
       </div>
 
@@ -120,7 +142,7 @@ export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (it
         <>
           <div className="field-grid">
             <div className="field">
-              <label>Modelo *</label>
+              <FieldLabel icon={Shirt}>Modelo *</FieldLabel>
               <select value={vestuario.produto} onChange={(e) => setV("produto", e.target.value)}>
                 {VESTUARIO_MODELOS.map((m) => (
                   <option key={m} value={m}>
@@ -130,7 +152,7 @@ export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (it
               </select>
             </div>
             <div className="field">
-              <label>Gola *</label>
+              <FieldLabel icon={CircleDot}>Gola *</FieldLabel>
               <select value={vestuario.gola} onChange={(e) => setV("gola", e.target.value)}>
                 <option value="">Selecione</option>
                 {GOLA_OPCOES.map((g) => (
@@ -141,7 +163,7 @@ export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (it
               </select>
             </div>
             <div className="field">
-              <label>Material (Tecido) *</label>
+              <FieldLabel icon={Layers}>Material (Tecido) *</FieldLabel>
               <select value={vestuario.material} onChange={(e) => setV("material", e.target.value)}>
                 <option value="">Selecione</option>
                 {MATERIAL_OPCOES.map((m) => (
@@ -152,15 +174,15 @@ export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (it
               </select>
             </div>
             <div className="field">
-              <label>Cor Principal *</label>
+              <FieldLabel icon={Palette}>Cor Principal *</FieldLabel>
               <input value={vestuario.cor_principal} onChange={(e) => setV("cor_principal", e.target.value)} />
             </div>
             <div className="field">
-              <label>Cor Secundária</label>
+              <FieldLabel icon={Droplet}>Cor Secundária</FieldLabel>
               <input value={vestuario.cor_secundaria} onChange={(e) => setV("cor_secundaria", e.target.value)} />
             </div>
             <div className="field">
-              <label>Manga *</label>
+              <FieldLabel icon={MoveHorizontal}>Manga *</FieldLabel>
               <select value={vestuario.manga} onChange={(e) => setV("manga", e.target.value)}>
                 <option value="">Selecione</option>
                 {MANGA_OPCOES.map((m) => (
@@ -171,7 +193,7 @@ export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (it
               </select>
             </div>
             <div className="field">
-              <label>Punho</label>
+              <FieldLabel icon={Square}>Punho</FieldLabel>
               <select value={vestuario.punho} onChange={(e) => setV("punho", e.target.value)}>
                 <option value="">Selecione</option>
                 {PUNHO_OPCOES.map((p) => (
@@ -185,19 +207,21 @@ export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (it
 
           <CheckboxGroup
             label="Tipo de Personalização"
+            icon={Sparkles}
             options={TIPO_PERSONALIZACAO_OPCOES}
             value={vestuario.tipo_personalizacao}
             onChange={(v) => setV("tipo_personalizacao", v)}
           />
           <CheckboxGroup
             label="Local da Personalização"
+            icon={MapPin}
             options={LOCAL_PERSONALIZACAO_OPCOES}
             value={vestuario.local_personalizacao}
             onChange={(v) => setV("local_personalizacao", v)}
           />
 
           <div className="field">
-            <label>Grade de Tamanhos — Adulto</label>
+            <FieldLabel icon={Ruler}>Grade de Tamanhos — Adulto</FieldLabel>
             <table className="grade-table">
               <thead>
                 <tr>
@@ -224,7 +248,7 @@ export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (it
           </div>
 
           <div className="field">
-            <label>Grade de Tamanhos — Infantil</label>
+            <FieldLabel icon={Baby}>Grade de Tamanhos — Infantil</FieldLabel>
             <table className="grade-table">
               <thead>
                 <tr>
@@ -251,14 +275,19 @@ export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (it
           </div>
 
           <div className="field" style={{ marginTop: 12 }}>
-            <label>Observação</label>
-            <textarea rows={2} value={vestuario.observacao} onChange={(e) => setV("observacao", e.target.value)} />
+            <FieldLabel icon={MessageSquare}>Observação</FieldLabel>
+            <textarea
+              rows={2}
+              placeholder="Descreva observações importantes sobre este item..."
+              value={vestuario.observacao}
+              onChange={(e) => setV("observacao", e.target.value)}
+            />
           </div>
         </>
       ) : (
         <div className="field-grid">
           <div className="field">
-            <label>Produto *</label>
+            <FieldLabel icon={Package}>Produto *</FieldLabel>
             <input list="brinde-produtos" value={brinde.produto} onChange={(e) => setB("produto", e.target.value)} />
             <datalist id="brinde-produtos">
               {BRINDE_PRODUTOS.map((p) => (
@@ -267,11 +296,11 @@ export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (it
             </datalist>
           </div>
           <div className="field">
-            <label>Tamanho / Detalhe</label>
+            <FieldLabel icon={Tag}>Tamanho / Detalhe</FieldLabel>
             <input value={brinde.tamanho_detalhe} onChange={(e) => setB("tamanho_detalhe", e.target.value)} />
           </div>
           <div className="field">
-            <label>Quantidade *</label>
+            <FieldLabel icon={Hash}>Quantidade *</FieldLabel>
             <input
               type="number"
               min={1}
@@ -280,15 +309,20 @@ export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (it
             />
           </div>
           <div className="field" style={{ gridColumn: "1 / -1" }}>
-            <label>Observação</label>
-            <textarea rows={2} value={brinde.observacao} onChange={(e) => setB("observacao", e.target.value)} />
+            <FieldLabel icon={MessageSquare}>Observação</FieldLabel>
+            <textarea
+              rows={2}
+              placeholder="Descreva observações importantes sobre este item..."
+              value={brinde.observacao}
+              onChange={(e) => setB("observacao", e.target.value)}
+            />
           </div>
         </div>
       )}
 
       <div className="actions-row">
         <button className="primary" type="submit" disabled={saving}>
-          {saving ? "Adicionando..." : "+ Adicionar à Lista"}
+          <Plus size={16} /> {saving ? "Adicionando..." : "Adicionar à Lista"}
         </button>
       </div>
     </form>

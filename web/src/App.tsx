@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Header } from "./components/Header";
+import { Footer } from "./components/Footer";
 import { ClienteForm } from "./pages/ClienteForm";
 import { ItemForm } from "./pages/ItemForm";
 import { ItensList } from "./pages/ItensList";
@@ -29,41 +31,33 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <header className="topbar">
-        <h1>
-          <span className="brand">ATTUAL</span> — Lançamento de Pedidos
-        </h1>
-        <nav className="tabs">
-          <button className={view === "novo" ? "active" : ""} onClick={goNovo}>
-            Novo Pedido
-          </button>
-          <button className={view === "historico" ? "active" : ""} onClick={() => setView("historico")}>
-            Histórico
-          </button>
-        </nav>
-      </header>
+      <Header view={view} onNovoPedido={goNovo} onHistorico={() => setView("historico")} />
 
-      {view === "historico" && <Historico />}
+      <main>
+        {view === "historico" && <Historico />}
 
-      {view === "novo" && (
-        <>
-          {!pedido && <ClienteForm onCreated={setPedido} />}
+        {view === "novo" && (
+          <>
+            {!pedido && <ClienteForm onCreated={setPedido} />}
 
-          {pedido && !resultado && (
-            <>
-              <ItemForm pedidoId={pedido.id} onAdded={(item) => setItens((prev) => [...prev, item])} />
-              <ItensList
-                pedidoId={pedido.id}
-                itens={itens}
-                onRemoved={(itemId) => setItens((prev) => prev.filter((i) => i.id !== itemId))}
-              />
-              <GerarDocumentos pedidoId={pedido.id} itens={itens} onFinalizado={setResultado} />
-            </>
-          )}
+            {pedido && !resultado && (
+              <>
+                <ItemForm pedidoId={pedido.id} onAdded={(item) => setItens((prev) => [...prev, item])} />
+                <ItensList
+                  pedidoId={pedido.id}
+                  itens={itens}
+                  onRemoved={(itemId) => setItens((prev) => prev.filter((i) => i.id !== itemId))}
+                />
+                <GerarDocumentos pedidoId={pedido.id} itens={itens} onFinalizado={setResultado} />
+              </>
+            )}
 
-          {resultado && <Resultado result={resultado} onNovoPedido={goNovo} />}
-        </>
-      )}
+            {resultado && <Resultado result={resultado} onNovoPedido={goNovo} />}
+          </>
+        )}
+      </main>
+
+      <Footer />
     </div>
   );
 }

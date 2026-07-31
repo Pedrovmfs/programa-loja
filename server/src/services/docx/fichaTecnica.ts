@@ -1,4 +1,4 @@
-import { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType } from "docx";
+import { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, ShadingType } from "docx";
 import type { Item, Pedido } from "../../types.js";
 import {
   VESTUARIO_MODELOS,
@@ -9,154 +9,238 @@ import {
   TIPO_PERSONALIZACAO_OPCOES,
   LOCAL_PERSONALIZACAO_OPCOES,
 } from "../../types.js";
-import {
-  titleParagraph,
-  subtitleParagraph,
-  sectionHeader,
-  footerParagraph,
-  infoTable,
-  checkboxGroup,
-  labelParagraph,
-  gradeTable,
-  blankGridTable,
-  cell,
-} from "./helpers.js";
+import * as S from "./shared.js";
+import { loadLogoBuffer } from "./logo.js";
 
 export function subOsLabel(osNumber: number, subOs: number): string {
   return `${osNumber}.${subOs}`;
 }
 
+function materialCaption(text: string) {
+  return new Paragraph({
+    spacing: { after: 80 },
+    children: [new TextRun({ text, bold: true, size: 17, color: S.INK_SOFT, font: "Arial", characterSpacing: 6 })],
+  });
+}
+
 export function buildFichaTecnicaDoc(pedido: Pedido, item: Item): Document {
   const subOsText = pedido.os_number && item.sub_os ? subOsLabel(pedido.os_number, item.sub_os) : "—";
+  const logoBuffer = loadLogoBuffer();
 
   const children: (Paragraph | Table)[] = [];
 
-  children.push(titleParagraph("ATTUAL CAMISETAS"));
-  children.push(subtitleParagraph("FICHA TÉCNICA + FICHA DE CORTE"));
+  children.push(S.buildHeader(logoBuffer, "Ficha Técnica + Ficha de Corte"));
+  children.push(S.orangeDivider());
 
   children.push(
-    infoTable([
+    S.infoTable([
       [
-        { label: "Nº OS", value: subOsText, widthPct: 25 },
-        { label: "Vendedor", value: pedido.vendedor ?? "", widthPct: 40 },
-        { label: "Prioridade", value: pedido.prioridade === "urgente" ? "URGENTE" : "Normal", widthPct: 35 },
+        ["Nº OS", subOsText],
+        ["Vendedor", pedido.vendedor ?? ""],
+        ["Prioridade", pedido.prioridade === "urgente" ? "Urgente" : "Normal"],
       ],
       [
-        { label: "Cliente", value: pedido.cliente, widthPct: 50 },
-        { label: "Data", value: new Date().toLocaleDateString("pt-BR"), widthPct: 25 },
-        { label: "Entrega", value: pedido.data_entrega ?? "", widthPct: 25 },
+        ["Cliente", pedido.cliente],
+        ["Data", new Date().toLocaleDateString("pt-BR")],
+        ["Entrega", pedido.data_entrega ?? ""],
       ],
     ])
   );
+  children.push(S.spacer(140));
 
   // 1. DADOS DO PRODUTO
-  children.push(sectionHeader("1. DADOS DO PRODUTO"));
-  children.push(labelParagraph("Modelo:"));
-  children.push(checkboxGroup(VESTUARIO_MODELOS, item.produto));
-  children.push(labelParagraph("Tipo de Gola:"));
-  children.push(checkboxGroup(GOLA_OPCOES, item.gola));
-  children.push(labelParagraph("Material (Tecido):"));
-  children.push(checkboxGroup(MATERIAL_OPCOES, item.material));
+  children.push(S.sectionBanner("1. Dados do Produto"));
+  children.push(S.spacer(140));
+  children.push(S.checkboxParagraph("Modelo:", VESTUARIO_MODELOS, new Set([item.produto])));
+  children.push(S.checkboxParagraph("Tipo de Gola:", GOLA_OPCOES, new Set([item.gola ?? ""])));
+  children.push(S.checkboxParagraph("Material (Tecido):", MATERIAL_OPCOES, new Set([item.material ?? ""])));
   children.push(
-    infoTable([
+    S.infoTable([
       [
-        { label: "Cor Principal", value: item.cor_principal ?? "", widthPct: 50 },
-        { label: "Cor Secundária", value: item.cor_secundaria ?? "", widthPct: 50 },
+        ["Cor Principal", item.cor_principal ?? ""],
+        ["Cor Secundária", item.cor_secundaria ?? ""],
       ],
     ])
   );
-  children.push(labelParagraph("Manga:"));
-  children.push(checkboxGroup(MANGA_OPCOES, item.manga));
-  children.push(labelParagraph("Punho:"));
-  children.push(checkboxGroup(PUNHO_OPCOES, item.punho));
+  children.push(S.spacer(140));
+  children.push(S.checkboxParagraph("Manga:", MANGA_OPCOES, new Set([item.manga ?? ""])));
+  children.push(S.checkboxParagraph("Punho:", PUNHO_OPCOES, new Set([item.punho ?? ""])));
+  children.push(S.spacer(110));
 
   // 2. PERSONALIZAÇÃO
-  children.push(sectionHeader("2. PERSONALIZAÇÃO"));
-  children.push(labelParagraph("Tipo de Personalização:"));
-  children.push(checkboxGroup(TIPO_PERSONALIZACAO_OPCOES, item.tipo_personalizacao));
-  children.push(labelParagraph("Local da Personalização:"));
-  children.push(checkboxGroup(LOCAL_PERSONALIZACAO_OPCOES, item.local_personalizacao));
+  children.push(S.sectionBanner("2. Personalização"));
+  children.push(S.spacer(140));
+  children.push(
+    S.checkboxParagraph("Tipo de Personalização:", TIPO_PERSONALIZACAO_OPCOES, new Set(item.tipo_personalizacao ?? []))
+  );
+  children.push(
+    S.checkboxParagraph("Local da Personalização:", LOCAL_PERSONALIZACAO_OPCOES, new Set(item.local_personalizacao ?? []))
+  );
+  children.push(S.spacer(110));
 
   // 3. GRADE DE TAMANHOS
-  children.push(sectionHeader("3. GRADE DE TAMANHOS (Quantidade)"));
-  const infantil = gradeTable("INFANTIL", [
-    { label: "2", value: item.grade_infantil_2 },
-    { label: "4", value: item.grade_infantil_4 },
-    { label: "6", value: item.grade_infantil_6 },
-    { label: "8", value: item.grade_infantil_8 },
-    { label: "10", value: item.grade_infantil_10 },
-  ]);
-  children.push(infantil.table);
-  const adulto = gradeTable("ADULTO", [
-    { label: "PP", value: item.grade_adulto_pp },
-    { label: "P", value: item.grade_adulto_p },
-    { label: "M", value: item.grade_adulto_m },
-    { label: "G", value: item.grade_adulto_g },
-    { label: "GG", value: item.grade_adulto_gg },
-  ]);
-  children.push(adulto.table);
+  children.push(S.sectionBanner("3. Grade de Tamanhos (Quantidade)"));
+  children.push(S.spacer(140));
+  const totalInfantil =
+    item.grade_infantil_2 + item.grade_infantil_4 + item.grade_infantil_6 + item.grade_infantil_8 + item.grade_infantil_10;
+  children.push(materialCaption("INFANTIL"));
   children.push(
-    new Paragraph({
-      spacing: { before: 120 },
-      children: [
-        new TextRun({ text: "TOTAL GERAL DE PEÇAS: ", bold: true, size: 20 }),
-        new TextRun({ text: String(infantil.total + adulto.total), bold: true, size: 20 }),
+    S.dataTable({
+      headers: ["TAMANHO", "2", "4", "6", "8", "10", "TOTAL"],
+      rows: [["QUANT.", item.grade_infantil_2, item.grade_infantil_4, item.grade_infantil_6, item.grade_infantil_8, item.grade_infantil_10, totalInfantil]],
+    })
+  );
+  children.push(S.spacer(110));
+  const totalAdulto =
+    item.grade_adulto_pp + item.grade_adulto_p + item.grade_adulto_m + item.grade_adulto_g + item.grade_adulto_gg;
+  children.push(materialCaption("ADULTO"));
+  children.push(
+    S.dataTable({
+      headers: ["TAMANHO", "PP", "P", "M", "G", "GG", "TOTAL"],
+      rows: [["QUANT.", item.grade_adulto_pp, item.grade_adulto_p, item.grade_adulto_m, item.grade_adulto_g, item.grade_adulto_gg, totalAdulto]],
+    })
+  );
+  children.push(S.spacer(130));
+  children.push(S.totalBox("TOTAL GERAL DE PEÇAS", totalInfantil + totalAdulto));
+  children.push(S.spacer(150));
+
+  // 4. CONSUMO DE MATERIAL (PREVISÃO)
+  children.push(S.sectionBanner("4. Consumo de Material (Previsão)"));
+  children.push(S.spacer(140));
+  children.push(
+    S.dataTable({
+      headers: ["MATERIAL", "PREVISTO", "UTILIZADO", "OBSERVAÇÕES"],
+      rows: [
+        ["Malha", "", "", ""],
+        ["Gola", "", "", ""],
+        ["Punho", "", "", ""],
+        ["Linha", "", "", ""],
+        ["DTF / Tinta", "", "", ""],
+        ["Papel Sublimático", "", "", ""],
+        ["Outros", "", "", ""],
+      ],
+      colWidths: [2674, 2505, 2505, 3103],
+      headerFill: S.INK,
+    })
+  );
+  children.push(S.spacer(130));
+
+  // 5. CONTROLE DE CORTE
+  children.push(S.sectionBanner("5. Controle de Corte"));
+  children.push(S.spacer(140));
+  children.push(
+    S.dataTable({
+      headers: ["TAMANHO", "CONFERIDO"],
+      rows: [["2", ""], ["4", ""], ["6", ""], ["8", ""], ["10", ""], ["PP", ""], ["P", ""], ["M", ""], ["G", ""], ["GG", ""]],
+      colWidths: [3061, 7726],
+      headerFill: S.INK,
+    })
+  );
+  children.push(S.spacer(130));
+
+  // 6. ARTE / ESTAMPA
+  children.push(S.sectionBanner("6. Arte / Estampa"));
+  children.push(S.spacer(140));
+  children.push(
+    new Table({
+      width: { size: S.CONTENT_WIDTH_DXA, type: WidthType.DXA },
+      columnWidths: [S.CONTENT_WIDTH_DXA / 2, S.CONTENT_WIDTH_DXA / 2],
+      borders: {
+        top: S.thinBorder(),
+        bottom: S.thinBorder(),
+        left: S.thinBorder(),
+        right: S.thinBorder(),
+        insideHorizontal: S.thinBorder(),
+        insideVertical: S.thinBorder(),
+      },
+      rows: [
+        new TableRow({
+          children: ["FRENTE", "COSTAS"].map(
+            (label) =>
+              new TableCell({
+                width: { size: S.CONTENT_WIDTH_DXA / 2, type: WidthType.DXA },
+                shading: { type: ShadingType.CLEAR, fill: S.GRAY_BAND, color: "auto" },
+                margins: { top: 70, bottom: 900, left: 100, right: 100 },
+                borders: S.cellBorders(),
+                children: [
+                  new Paragraph({
+                    children: [new TextRun({ text: label, bold: true, size: 17, color: S.INK, font: "Arial" })],
+                  }),
+                ],
+              })
+          ),
+        }),
       ],
     })
   );
+  children.push(S.spacer(130));
 
-  // 4. CONSUMO DE MATERIAL (PREVISÃO)
-  children.push(sectionHeader("4. CONSUMO DE MATERIAL (PREVISÃO)"));
-  children.push(
-    blankGridTable(
-      ["Malha", "Gola", "Punho", "Linha", "DTF / Tinta", "Papel Sublimático", "Outros"],
-      ["Previsto", "Utilizado", "Observações"]
-    )
-  );
-
-  // 5. CONTROLE DE CORTE
-  children.push(sectionHeader("5. CONTROLE DE CORTE"));
-  children.push(
-    blankGridTable(["2", "4", "6", "8", "10", "PP", "P", "M", "G", "GG"], ["Conferido"])
-  );
-
-  // 6. ARTE / ESTAMPA
-  children.push(sectionHeader("6. ARTE / ESTAMPA"));
+  // 7. OBSERVAÇÕES IMPORTANTES
+  children.push(S.sectionBanner("7. Observações Importantes"));
+  children.push(S.spacer(140));
   children.push(
     new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
+      width: { size: S.CONTENT_WIDTH_DXA, type: WidthType.DXA },
+      columnWidths: [S.CONTENT_WIDTH_DXA],
+      borders: {
+        top: S.thinBorder(),
+        bottom: S.thinBorder(),
+        left: S.thinBorder(),
+        right: S.thinBorder(),
+        insideHorizontal: S.thinBorder(),
+        insideVertical: S.thinBorder(),
+      },
       rows: [
         new TableRow({
           children: [
             new TableCell({
-              width: { size: 50, type: WidthType.PERCENTAGE },
-              children: [labelParagraph("FRENTE"), new Paragraph({ children: [new TextRun(" ")] })],
-            }),
-            new TableCell({
-              width: { size: 50, type: WidthType.PERCENTAGE },
-              children: [labelParagraph("COSTAS"), new Paragraph({ children: [new TextRun(" ")] })],
+              width: { size: S.CONTENT_WIDTH_DXA, type: WidthType.DXA },
+              margins: { top: 100, bottom: 650, left: 120, right: 120 },
+              borders: S.cellBorders(),
+              children: [
+                new Paragraph({
+                  children: [new TextRun({ text: item.observacao ?? "", size: 18, color: S.INK_SOFT, font: "Arial" })],
+                }),
+              ],
             }),
           ],
         }),
       ],
     })
   );
-
-  // 7. OBSERVAÇÕES IMPORTANTES
-  children.push(sectionHeader("7. OBSERVAÇÕES IMPORTANTES"));
-  children.push(new Paragraph({ children: [new TextRun({ text: item.observacao ?? "", size: 18 })] }));
-  children.push(new Paragraph({ children: [new TextRun(" ")] }));
-  children.push(new Paragraph({ children: [new TextRun(" ")] }));
+  children.push(S.spacer(130));
 
   // 8. RESPONSÁVEIS
-  children.push(sectionHeader("8. RESPONSÁVEIS"));
+  children.push(S.sectionBanner("8. Responsáveis"));
+  children.push(S.spacer(140));
   children.push(
-    blankGridTable(["Arte / Criação", "Corte", "Costura", "Impressão / Sublimação"], ["Nome", "Data"])
+    S.dataTable({
+      headers: ["", "NOME", "DATA"],
+      rows: [
+        ["Arte / Criação", "", ""],
+        ["Corte", "", ""],
+        ["Costura", "", ""],
+        ["Impressão / Sublimação", "", ""],
+      ],
+      colWidths: [3067, 5419, 2301],
+      headerFill: S.INK,
+    })
   );
+  children.push(S.spacer(150));
 
-  children.push(footerParagraph("QUALIDADE · COMPROMISSO · PONTUALIDADE"));
+  children.push(S.footerBar());
 
   return new Document({
-    sections: [{ children }],
+    sections: [
+      {
+        properties: {
+          page: {
+            size: { width: S.PAGE_WIDTH_DXA, height: 16839 },
+            margin: { top: S.MARGIN_DXA, bottom: S.MARGIN_DXA, left: S.MARGIN_DXA, right: S.MARGIN_DXA },
+          },
+        },
+        children,
+      },
+    ],
   });
 }
