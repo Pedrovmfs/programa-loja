@@ -135,12 +135,14 @@ async function startBackend(config) {
   fs.mkdirSync(dataDir, { recursive: true });
   const serverBundle = resourcePath("server", "index.cjs");
   const webDist = resourcePath("web");
+  const logoPath = resourcePath("server", "assets", "logo.png");
 
   serverProcess = spawn(nodeExe, [serverBundle], {
     env: {
       ...process.env,
       ATTUAL_DATA_DIR: dataDir,
       ATTUAL_WEB_DIST: webDist,
+      ATTUAL_LOGO_PATH: logoPath,
       PORT: "4000",
     },
     windowsHide: true,

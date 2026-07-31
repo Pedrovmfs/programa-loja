@@ -13,6 +13,7 @@ const repoRoot = path.join(desktopRoot, "..");
 
 const serverEntry = path.join(repoRoot, "server", "dist", "index.js");
 const webDist = path.join(repoRoot, "web", "dist");
+const logoSrc = path.join(repoRoot, "server", "assets", "logo.png");
 
 if (!existsSync(serverEntry)) {
   console.error(`Não encontrei ${serverEntry}. Rode "npm run build" na raiz do repositório antes.`);
@@ -37,5 +38,10 @@ await build({
 });
 
 cpSync(webDist, path.join(resourcesDir, "web"), { recursive: true });
+
+if (existsSync(logoSrc)) {
+  mkdirSync(path.join(resourcesDir, "server", "assets"), { recursive: true });
+  cpSync(logoSrc, path.join(resourcesDir, "server", "assets", "logo.png"));
+}
 
 console.log("Bundle do backend + frontend gerado em desktop/resources/");
