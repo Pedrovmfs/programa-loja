@@ -2,6 +2,7 @@ import { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, Sh
 import type { Item, Pedido } from "../../types.js";
 import {
   VESTUARIO_MODELOS,
+  MODELO_CAMPOS,
   GOLA_OPCOES,
   MATERIAL_OPCOES,
   MANGA_OPCOES,
@@ -49,10 +50,13 @@ export function buildFichaTecnicaDoc(pedido: Pedido, item: Item): Document {
   children.push(S.spacer(140));
 
   // 1. DADOS DO PRODUTO
+  const campos = MODELO_CAMPOS[item.produto as keyof typeof MODELO_CAMPOS] ?? { gola: true, manga: true, punho: true };
   children.push(S.sectionBanner("1. Dados do Produto"));
   children.push(S.spacer(140));
   children.push(S.checkboxParagraph("Modelo:", VESTUARIO_MODELOS, new Set([item.produto])));
-  children.push(S.checkboxParagraph("Tipo de Gola:", GOLA_OPCOES, new Set([item.gola ?? ""])));
+  if (campos.gola) {
+    children.push(S.checkboxParagraph("Tipo de Gola:", GOLA_OPCOES, new Set([item.gola ?? ""])));
+  }
   children.push(S.checkboxParagraph("Material (Tecido):", MATERIAL_OPCOES, new Set([item.material ?? ""])));
   children.push(
     S.infoTable([
@@ -63,8 +67,12 @@ export function buildFichaTecnicaDoc(pedido: Pedido, item: Item): Document {
     ])
   );
   children.push(S.spacer(140));
-  children.push(S.checkboxParagraph("Manga:", MANGA_OPCOES, new Set([item.manga ?? ""])));
-  children.push(S.checkboxParagraph("Punho:", PUNHO_OPCOES, new Set([item.punho ?? ""])));
+  if (campos.manga) {
+    children.push(S.checkboxParagraph("Manga:", MANGA_OPCOES, new Set([item.manga ?? ""])));
+  }
+  if (campos.punho) {
+    children.push(S.checkboxParagraph("Punho:", PUNHO_OPCOES, new Set([item.punho ?? ""])));
+  }
   children.push(S.spacer(110));
 
   // 2. PERSONALIZAÇÃO

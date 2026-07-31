@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MODELO_CAMPOS } from "./types.js";
 
 export const pedidoInputSchema = z.object({
   cliente: z.string().trim().min(1, "Cliente é obrigatório"),
@@ -17,11 +18,11 @@ const gradeNumber = z.coerce.number().int().min(0).default(0);
 const vestuarioFields = z.object({
   categoria: z.literal("vestuario"),
   produto: z.string().trim().min(1, "Modelo é obrigatório"),
-  gola: z.string().trim().min(1, "Gola é obrigatória"),
+  gola: z.string().trim().optional().default(""),
   material: z.string().trim().min(1, "Material é obrigatório"),
   cor_principal: z.string().trim().min(1, "Cor principal é obrigatória"),
   cor_secundaria: z.string().trim().optional().default(""),
-  manga: z.string().trim().min(1, "Manga é obrigatória"),
+  manga: z.string().trim().optional().default(""),
   punho: z.string().trim().optional().default(""),
   tipo_personalizacao: z.array(z.string()).default([]),
   local_personalizacao: z.array(z.string()).default([]),
@@ -50,6 +51,15 @@ export const itemInputSchema = z
   .discriminatedUnion("categoria", [vestuarioFields, brindeFields])
   .superRefine((val, ctx) => {
     if (val.categoria !== "vestuario") return;
+
+    const campos = MODELO_CAMPOS[val.produto as keyof typeof MODELO_CAMPOS];
+    if (campos?.gola && !val.gola) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Gola é obrigatória para esse modelo", path: ["gola"] });
+    }
+    if (campos?.manga && !val.manga) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Manga é obrigatória para esse modelo", path: ["manga"] });
+    }
+
     const total =
       val.grade_adulto_pp +
       val.grade_adulto_p +

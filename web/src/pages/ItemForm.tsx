@@ -28,6 +28,7 @@ import { FieldLabel } from "../components/FieldLabel";
 import type { Item } from "../types";
 import {
   VESTUARIO_MODELOS,
+  MODELO_CAMPOS,
   GOLA_OPCOES,
   MATERIAL_OPCOES,
   MANGA_OPCOES,
@@ -153,6 +154,26 @@ export function ItemForm({
     setBrinde((f) => ({ ...f, [key]: value }));
   }
 
+  const campos = MODELO_CAMPOS[vestuario.produto as keyof typeof MODELO_CAMPOS] ?? {
+    gola: true,
+    manga: true,
+    punho: true,
+  };
+
+  function handleProdutoChange(produto: string) {
+    // reseta gola/manga/punho ao trocar de modelo — evita carregar um valor
+    // que não faz sentido pro novo tipo de peça (ex: "Manga Longa" ao trocar
+    // de Camiseta pra Short, que nem tem manga)
+    const novosCampos = MODELO_CAMPOS[produto as keyof typeof MODELO_CAMPOS] ?? { gola: true, manga: true, punho: true };
+    setVestuario((f) => ({
+      ...f,
+      produto,
+      gola: novosCampos.gola ? f.gola : "",
+      manga: novosCampos.manga ? f.manga : "",
+      punho: novosCampos.punho ? f.punho : "",
+    }));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -204,7 +225,7 @@ export function ItemForm({
           <div className="field-grid">
             <div className="field">
               <FieldLabel icon={Shirt}>Modelo *</FieldLabel>
-              <select value={vestuario.produto} onChange={(e) => setV("produto", e.target.value)}>
+              <select value={vestuario.produto} onChange={(e) => handleProdutoChange(e.target.value)}>
                 {VESTUARIO_MODELOS.map((m) => (
                   <option key={m} value={m}>
                     {m}
@@ -212,17 +233,19 @@ export function ItemForm({
                 ))}
               </select>
             </div>
-            <div className="field">
-              <FieldLabel icon={CircleDot}>Gola *</FieldLabel>
-              <select value={vestuario.gola} onChange={(e) => setV("gola", e.target.value)}>
-                <option value="">Selecione</option>
-                {GOLA_OPCOES.map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {campos.gola && (
+              <div className="field">
+                <FieldLabel icon={CircleDot}>Gola *</FieldLabel>
+                <select value={vestuario.gola} onChange={(e) => setV("gola", e.target.value)}>
+                  <option value="">Selecione</option>
+                  {GOLA_OPCOES.map((g) => (
+                    <option key={g} value={g}>
+                      {g}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="field">
               <FieldLabel icon={Layers}>Material (Tecido) *</FieldLabel>
               <select value={vestuario.material} onChange={(e) => setV("material", e.target.value)}>
@@ -242,28 +265,32 @@ export function ItemForm({
               <FieldLabel icon={Droplet}>Cor Secundária</FieldLabel>
               <input value={vestuario.cor_secundaria} onChange={(e) => setV("cor_secundaria", e.target.value)} />
             </div>
-            <div className="field">
-              <FieldLabel icon={MoveHorizontal}>Manga *</FieldLabel>
-              <select value={vestuario.manga} onChange={(e) => setV("manga", e.target.value)}>
-                <option value="">Selecione</option>
-                {MANGA_OPCOES.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <FieldLabel icon={Square}>Punho</FieldLabel>
-              <select value={vestuario.punho} onChange={(e) => setV("punho", e.target.value)}>
-                <option value="">Selecione</option>
-                {PUNHO_OPCOES.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {campos.manga && (
+              <div className="field">
+                <FieldLabel icon={MoveHorizontal}>Manga *</FieldLabel>
+                <select value={vestuario.manga} onChange={(e) => setV("manga", e.target.value)}>
+                  <option value="">Selecione</option>
+                  {MANGA_OPCOES.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {campos.punho && (
+              <div className="field">
+                <FieldLabel icon={Square}>Punho</FieldLabel>
+                <select value={vestuario.punho} onChange={(e) => setV("punho", e.target.value)}>
+                  <option value="">Selecione</option>
+                  {PUNHO_OPCOES.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           <CheckboxGroup

@@ -80,6 +80,24 @@ export const VESTUARIO_MODELOS = [
   "Outro",
 ] as const;
 
+// Quais campos fazem sentido pra cada tipo de peça — evita mostrar/exigir
+// coisa incoerente, tipo "manga" pra Short ou Regata (que não tem manga).
+export interface CamposModelo {
+  gola: boolean;
+  manga: boolean;
+  punho: boolean;
+}
+
+export const MODELO_CAMPOS: Record<(typeof VESTUARIO_MODELOS)[number], CamposModelo> = {
+  Camiseta: { gola: true, manga: true, punho: true },
+  "Baby Look": { gola: true, manga: true, punho: true },
+  Regata: { gola: true, manga: false, punho: false },
+  Colete: { gola: true, manga: false, punho: false },
+  Short: { gola: false, manga: false, punho: false },
+  Machão: { gola: true, manga: false, punho: false },
+  Outro: { gola: true, manga: true, punho: true },
+};
+
 export const GOLA_OPCOES = ["Redonda", "V", "Polo", "Esportiva", "Outra"] as const;
 
 export const MATERIAL_OPCOES = [
