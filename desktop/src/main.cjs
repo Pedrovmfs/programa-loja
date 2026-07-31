@@ -2,8 +2,9 @@ const { app, BrowserWindow, Menu, ipcMain, dialog } = require("electron");
 const path = require("node:path");
 const os = require("node:os");
 const http = require("node:http");
+const fs = require("node:fs");
 const { spawn, spawnSync } = require("node:child_process");
-const { readConfig, writeConfig, clearConfig } = require("./config.cjs");
+const { readConfig, writeConfig, clearConfig, updateConfig } = require("./config.cjs");
 
 const userDataDir = app.getPath("userData");
 let serverProcess = null;
@@ -11,6 +12,14 @@ let serverProcess = null;
 function resourcePath(...segments) {
   const base = app.isPackaged ? process.resourcesPath : path.join(__dirname, "..", "resources");
   return path.join(base, ...segments);
+}
+
+function defaultDataDir() {
+  return path.join(userDataDir, "data");
+}
+
+function effectiveDataDir(config) {
+  return config?.dataDir || defaultDataDir();
 }
 
 function normalizeAddress(input) {
@@ -108,7 +117,7 @@ function loadWithRetry(win, targetUrl) {
   });
 }
 
-async function startBackend() {
+async function startBackend(config) {
   const nodeExe = findNodeExecutable();
   if (!nodeExe) {
     await dialog.showMessageBox({
@@ -122,7 +131,8 @@ async function startBackend() {
     return false;
   }
 
-  const dataDir = path.join(userDataDir, "data");
+  const dataDir = effectiveDataDir(config);
+  fs.mkdirSync(dataDir, { recursive: true });
   const serverBundle = resourcePath("server", "index.cjs");
   const webDist = resourcePath("web");
 
@@ -154,7 +164,7 @@ async function launchMainWindow(config) {
   let targetUrl;
 
   if (config.mode === "principal") {
-    const ok = await startBackend();
+    const ok = await startBackend(config);
     if (!ok) return;
     targetUrl = "http://localhost:4000";
   } else {
@@ -169,36 +179,77 @@ async function launchMainWindow(config) {
       nodeIntegration: false,
     },
   });
-  buildMenu(win);
+  buildMenu(win, config);
   loadWithRetry(win, targetUrl);
 }
 
-function buildMenu(win) {
-  const template = [
+async function handleEscolherPastaDeDados(win, config) {
+  const atual = effectiveDataDir(config);
+  const escolha = await dialog.showOpenDialog(win, {
+    title: "Escolher pasta onde os pedidos e documentos ficam salvos",
+    defaultPath: atual,
+    properties: ["openDirectory", "createDirectory"],
+  });
+  if (escolha.canceled || escolha.filePaths.length === 0) return;
+
+  const novaPasta = escolha.filePaths[0];
+  if (path.resolve(novaPasta) === path.resolve(atual)) return;
+
+  const confirmado = await dialog.showMessageBox(win, {
+    type: "question",
+    buttons: ["Cancelar", "Mover e Reiniciar"],
+    defaultId: 1,
+    message: `Os pedidos e documentos salvos em:\n${atual}\n\nserão copiados para:\n${novaPasta}\n\nA pasta antiga não será apagada. O programa reinicia em seguida para usar a nova pasta.`,
+  });
+  if (confirmado.response !== 1) return;
+
+  try {
+    if (fs.existsSync(atual)) {
+      fs.mkdirSync(novaPasta, { recursive: true });
+      fs.cpSync(atual, novaPasta, { recursive: true });
+    }
+    updateConfig(userDataDir, { dataDir: novaPasta });
+    app.relaunch();
+    app.exit(0);
+  } catch (err) {
+    await dialog.showMessageBox(win, {
+      type: "error",
+      title: "Erro ao mover os dados",
+      message: `Não consegui copiar os arquivos: ${err.message}`,
+    });
+  }
+}
+
+function buildMenu(win, config) {
+  const submenu = [
     {
-      label: "Configurações",
-      submenu: [
-        {
-          label: "Alterar modo de conexão",
-          click: async () => {
-            const confirmed = await dialog.showMessageBox(win, {
-              type: "question",
-              buttons: ["Cancelar", "Alterar"],
-              defaultId: 1,
-              message: "Isso vai fechar o programa para reconfigurar (computador principal ou conectar a outro).",
-            });
-            if (confirmed.response === 1) {
-              clearConfig(userDataDir);
-              app.relaunch();
-              app.exit(0);
-            }
-          },
-        },
-        { role: "quit", label: "Sair" },
-      ],
+      label: "Alterar modo de conexão",
+      click: async () => {
+        const confirmed = await dialog.showMessageBox(win, {
+          type: "question",
+          buttons: ["Cancelar", "Alterar"],
+          defaultId: 1,
+          message: "Isso vai fechar o programa para reconfigurar (computador principal ou conectar a outro).",
+        });
+        if (confirmed.response === 1) {
+          clearConfig(userDataDir);
+          app.relaunch();
+          app.exit(0);
+        }
+      },
     },
   ];
-  win.setMenu(Menu.buildFromTemplate(template));
+
+  if (config?.mode === "principal") {
+    submenu.push({
+      label: "Escolher Pasta de Dados...",
+      click: () => handleEscolherPastaDeDados(win, config),
+    });
+  }
+
+  submenu.push({ role: "quit", label: "Sair" });
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate([{ label: "Configurações", submenu }]));
 }
 
 app.whenReady().then(() => {

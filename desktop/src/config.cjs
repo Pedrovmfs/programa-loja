@@ -27,4 +27,11 @@ function clearConfig(userDataDir) {
   }
 }
 
-module.exports = { readConfig, writeConfig, clearConfig };
+function updateConfig(userDataDir, partial) {
+  const current = readConfig(userDataDir) ?? {};
+  const merged = { ...current, ...partial };
+  writeConfig(userDataDir, merged);
+  return merged;
+}
+
+module.exports = { readConfig, writeConfig, clearConfig, updateConfig };
