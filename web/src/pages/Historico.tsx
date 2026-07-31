@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { History, FileText } from "lucide-react";
+import { History, FileText, Pencil } from "lucide-react";
 import { api, ApiError } from "../api";
 import type { Pedido } from "../types";
 import { SectionTitle } from "../components/SectionTitle";
 import { EmptyState } from "../components/EmptyState";
 
-export function Historico() {
+export function Historico({ onEditar }: { onEditar: (pedidoId: number) => void }) {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +36,7 @@ export function Historico() {
               <th>Entrega</th>
               <th>Status</th>
               <th>Documento</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -45,7 +46,11 @@ export function Historico() {
                 <td>{p.cliente}</td>
                 <td>{p.vendedor}</td>
                 <td>{p.data_entrega}</td>
-                <td>{p.status}</td>
+                <td>
+                  <span className={`badge ${p.status === "finalizado" ? "vestuario" : "brinde"}`}>
+                    {p.status === "finalizado" ? "finalizado" : "rascunho"}
+                  </span>
+                </td>
                 <td>
                   {p.capa_resumo_path ? (
                     <a href={`/api/documentos/${p.capa_resumo_path}`} target="_blank" rel="noreferrer">
@@ -54,6 +59,11 @@ export function Historico() {
                   ) : (
                     "—"
                   )}
+                </td>
+                <td>
+                  <button type="button" className="link-edit" onClick={() => onEditar(p.id)}>
+                    <Pencil size={13} /> Editar
+                  </button>
                 </td>
               </tr>
             ))}

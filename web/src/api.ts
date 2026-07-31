@@ -44,10 +44,14 @@ export interface FinalizarResponse {
 export const api = {
   criarPedido: (input: PedidoInput) =>
     request<Pedido>("/pedidos", { method: "POST", body: JSON.stringify(input) }),
+  atualizarPedido: (pedidoId: number, input: PedidoInput) =>
+    request<Pedido>(`/pedidos/${pedidoId}`, { method: "PUT", body: JSON.stringify(input) }),
   getPedido: (id: number) => request<{ pedido: Pedido; itens: Item[] }>(`/pedidos/${id}`),
   listarPedidos: () => request<Pedido[]>("/pedidos"),
   addItem: (pedidoId: number, input: Record<string, unknown>) =>
     request<Item>(`/pedidos/${pedidoId}/itens`, { method: "POST", body: JSON.stringify(input) }),
+  atualizarItem: (pedidoId: number, itemId: number, input: Record<string, unknown>) =>
+    request<Item>(`/pedidos/${pedidoId}/itens/${itemId}`, { method: "PUT", body: JSON.stringify(input) }),
   removeItem: (pedidoId: number, itemId: number) =>
     request<void>(`/pedidos/${pedidoId}/itens/${itemId}`, { method: "DELETE" }),
   finalizar: (pedidoId: number) =>

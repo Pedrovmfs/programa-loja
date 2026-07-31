@@ -1,5 +1,5 @@
 import { Packer } from "docx";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync, readdirSync, unlinkSync } from "node:fs";
 import path from "node:path";
 import { DOCS_DIR } from "../../db.js";
 import type { Item, Pedido } from "../../types.js";
@@ -29,6 +29,14 @@ export async function gerarDocumentos(
     writeFileSync(path.join(dir, fileName), buffer);
     setItemDocxPath(item.id, path.join(String(pedido.os_number), fileName));
     fichasFiles.push(fileName);
+  }
+
+  // Remove fichas antigas de itens que não existem mais (removidos ou cuja
+  // grade de sub-OS mudou ao regenerar), pra não deixar arquivo órfão.
+  for (const existing of readdirSync(dir)) {
+    if (existing.startsWith("Ficha_Tecnica_") && !fichasFiles.includes(existing)) {
+      unlinkSync(path.join(dir, existing));
+    }
   }
 
   const capaDoc = buildCapaResumoDoc(pedido, itens);

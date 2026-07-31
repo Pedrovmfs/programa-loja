@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { User, Phone, MapPin, Hash, UserCheck, CalendarClock, AlertTriangle, ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { User, Phone, MapPin, Hash, UserCheck, CalendarClock, AlertTriangle, ArrowRight, Save } from "lucide-react";
 import { api, ApiError, PedidoInput } from "../api";
 import type { Pedido } from "../types";
 import { SectionTitle } from "../components/SectionTitle";
@@ -15,10 +15,35 @@ const EMPTY: PedidoInput = {
   prioridade: "normal",
 };
 
-export function ClienteForm({ onCreated }: { onCreated: (pedido: Pedido) => void }) {
-  const [form, setForm] = useState<PedidoInput>(EMPTY);
+function pedidoToForm(pedido: Pedido): PedidoInput {
+  return {
+    cliente: pedido.cliente,
+    telefone: pedido.telefone ?? "",
+    endereco: pedido.endereco ?? "",
+    cep: pedido.cep ?? "",
+    vendedor: pedido.vendedor ?? "",
+    data_entrega: pedido.data_entrega ?? "",
+    prioridade: pedido.prioridade,
+  };
+}
+
+export function ClienteForm({
+  pedido,
+  onCreated,
+  onUpdated,
+}: {
+  pedido?: Pedido | null;
+  onCreated: (pedido: Pedido) => void;
+  onUpdated?: (pedido: Pedido) => void;
+}) {
+  const [form, setForm] = useState<PedidoInput>(pedido ? pedidoToForm(pedido) : EMPTY);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const editMode = !!pedido;
+
+  useEffect(() => {
+    if (pedido) setForm(pedidoToForm(pedido));
+  }, [pedido?.id]);
 
   function set<K extends keyof PedidoInput>(key: K, value: PedidoInput[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -29,10 +54,15 @@ export function ClienteForm({ onCreated }: { onCreated: (pedido: Pedido) => void
     setError(null);
     setSaving(true);
     try {
-      const pedido = await api.criarPedido(form);
-      onCreated(pedido);
+      if (editMode && pedido) {
+        const atualizado = await api.atualizarPedido(pedido.id, form);
+        onUpdated?.(atualizado);
+      } else {
+        const criado = await api.criarPedido(form);
+        onCreated(criado);
+      }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Erro ao criar pedido");
+      setError(err instanceof ApiError ? err.message : "Erro ao salvar dados do cliente");
     } finally {
       setSaving(false);
     }
@@ -40,7 +70,7 @@ export function ClienteForm({ onCreated }: { onCreated: (pedido: Pedido) => void
 
   return (
     <form className="card" onSubmit={handleSubmit}>
-      <SectionTitle icon={User}>1. Dados do Cliente</SectionTitle>
+      <SectionTitle icon={User}>{editMode ? "Dados do Cliente" : "1. Dados do Cliente"}</SectionTitle>
       {error && <div className="alert error">{error}</div>}
       <div className="field-grid">
         <div className="field">
@@ -76,9 +106,15 @@ export function ClienteForm({ onCreated }: { onCreated: (pedido: Pedido) => void
         </div>
       </div>
       <div className="actions-row">
-        <button className="primary" type="submit" disabled={saving}>
-          {saving ? "Salvando..." : "Continuar"} <ArrowRight size={16} />
-        </button>
+        {editMode ? (
+          <button className="secondary" type="submit" disabled={saving}>
+            <Save size={16} /> {saving ? "Salvando..." : "Salvar Dados do Cliente"}
+          </button>
+        ) : (
+          <button className="primary" type="submit" disabled={saving}>
+            {saving ? "Salvando..." : "Continuar"} <ArrowRight size={16} />
+          </button>
+        )}
       </div>
     </form>
   );

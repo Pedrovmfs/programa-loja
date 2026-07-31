@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ListChecks, Shirt } from "lucide-react";
+import { ListChecks, Shirt, Pencil } from "lucide-react";
 import { api, ApiError } from "../api";
 import type { Item } from "../types";
 import { SectionTitle } from "../components/SectionTitle";
@@ -29,11 +29,15 @@ function resumo(item: Item): string {
 export function ItensList({
   pedidoId,
   itens,
+  editingItemId,
   onRemoved,
+  onEdit,
 }: {
   pedidoId: number;
   itens: Item[];
+  editingItemId?: number | null;
   onRemoved: (itemId: number) => void;
+  onEdit: (item: Item) => void;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<number | null>(null);
@@ -75,7 +79,7 @@ export function ItensList({
           </thead>
           <tbody>
             {itens.map((item, idx) => (
-              <tr key={item.id}>
+              <tr key={item.id} className={editingItemId === item.id ? "editing" : ""}>
                 <td>{idx + 1}</td>
                 <td>
                   <span className={`badge ${item.categoria}`}>{item.categoria}</span>
@@ -83,8 +87,16 @@ export function ItensList({
                 <td>{item.produto}</td>
                 <td>{resumo(item)}</td>
                 <td>{item.observacao}</td>
-                <td>
-                  <button className="link-danger" disabled={removingId === item.id} onClick={() => handleRemove(item.id)}>
+                <td className="row-actions">
+                  <button type="button" className="link-edit" onClick={() => onEdit(item)}>
+                    <Pencil size={13} /> Editar
+                  </button>
+                  <button
+                    type="button"
+                    className="link-danger"
+                    disabled={removingId === item.id}
+                    onClick={() => handleRemove(item.id)}
+                  >
                     {removingId === item.id ? "Removendo..." : "Remover"}
                   </button>
                 </td>

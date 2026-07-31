@@ -5,9 +5,8 @@ import { ClienteForm } from "./pages/ClienteForm";
 import { ItemForm } from "./pages/ItemForm";
 import { ItensList } from "./pages/ItensList";
 import { GerarDocumentos } from "./pages/GerarDocumentos";
-import { Resultado } from "./pages/Resultado";
 import { Historico } from "./pages/Historico";
-import type { FinalizarResponse } from "./api";
+import { api, ApiError, FinalizarResponse } from "./api";
 import type { Item, Pedido } from "./types";
 
 type View = "novo" | "historico";
@@ -16,12 +15,14 @@ export default function App() {
   const [view, setView] = useState<View>("novo");
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [itens, setItens] = useState<Item[]>([]);
-  const [resultado, setResultado] = useState<FinalizarResponse | null>(null);
+  const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   function resetNovoPedido() {
     setPedido(null);
     setItens([]);
-    setResultado(null);
+    setEditingItem(null);
+    setLoadError(null);
   }
 
   function goNovo() {
@@ -29,30 +30,67 @@ export default function App() {
     setView("novo");
   }
 
+  async function handleAbrirPedido(pedidoId: number) {
+    setLoadError(null);
+    try {
+      const { pedido: p, itens: i } = await api.getPedido(pedidoId);
+      setPedido(p);
+      setItens(i);
+      setEditingItem(null);
+      setView("novo");
+    } catch (err) {
+      setLoadError(err instanceof ApiError ? err.message : "Erro ao carregar pedido");
+    }
+  }
+
+  function handleItemUpdated(item: Item) {
+    setItens((prev) => prev.map((i) => (i.id === item.id ? item : i)));
+    setEditingItem(null);
+  }
+
+  function handleItemRemoved(itemId: number) {
+    setItens((prev) => prev.filter((i) => i.id !== itemId));
+    if (editingItem?.id === itemId) setEditingItem(null);
+  }
+
+  function handleAtualizado(result: FinalizarResponse) {
+    setPedido(result.pedido);
+    setItens(result.itens);
+  }
+
   return (
     <div className="app-shell">
       <Header view={view} onNovoPedido={goNovo} onHistorico={() => setView("historico")} />
 
       <main>
-        {view === "historico" && <Historico />}
+        {view === "historico" && <Historico onEditar={handleAbrirPedido} />}
 
         {view === "novo" && (
           <>
+            {loadError && <div className="alert error">{loadError}</div>}
+
             {!pedido && <ClienteForm onCreated={setPedido} />}
 
-            {pedido && !resultado && (
+            {pedido && (
               <>
-                <ItemForm pedidoId={pedido.id} onAdded={(item) => setItens((prev) => [...prev, item])} />
+                <ClienteForm pedido={pedido} onCreated={setPedido} onUpdated={setPedido} />
+                <ItemForm
+                  pedidoId={pedido.id}
+                  editingItem={editingItem}
+                  onAdded={(item) => setItens((prev) => [...prev, item])}
+                  onUpdated={handleItemUpdated}
+                  onCancelEdit={() => setEditingItem(null)}
+                />
                 <ItensList
                   pedidoId={pedido.id}
                   itens={itens}
-                  onRemoved={(itemId) => setItens((prev) => prev.filter((i) => i.id !== itemId))}
+                  editingItemId={editingItem?.id}
+                  onRemoved={handleItemRemoved}
+                  onEdit={setEditingItem}
                 />
-                <GerarDocumentos pedidoId={pedido.id} itens={itens} onFinalizado={setResultado} />
+                <GerarDocumentos pedidoId={pedido.id} pedido={pedido} itens={itens} onAtualizado={handleAtualizado} />
               </>
             )}
-
-            {resultado && <Resultado result={resultado} onNovoPedido={goNovo} />}
           </>
         )}
       </main>

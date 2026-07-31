@@ -154,6 +154,79 @@ export function removeItem(pedidoId: number, itemId: number): boolean {
   return result.changes > 0;
 }
 
+export function updatePedido(pedidoId: number, input: PedidoInput): Pedido {
+  db.prepare(
+    `UPDATE pedidos SET
+       cliente = @cliente, telefone = @telefone, endereco = @endereco, cep = @cep,
+       vendedor = @vendedor, data_entrega = @data_entrega, prioridade = @prioridade
+     WHERE id = @id`
+  ).run({ ...input, id: pedidoId });
+  return getPedido(pedidoId)!;
+}
+
+export function updateItem(pedidoId: number, itemId: number, input: ItemInput): Item | undefined {
+  if (!getItem(pedidoId, itemId)) return undefined;
+
+  if (input.categoria === "vestuario") {
+    db.prepare(
+      `UPDATE itens SET
+         categoria = 'vestuario', produto = @produto, gola = @gola, material = @material,
+         cor_principal = @cor_principal, cor_secundaria = @cor_secundaria, manga = @manga, punho = @punho,
+         tipo_personalizacao = @tipo_personalizacao, local_personalizacao = @local_personalizacao,
+         grade_adulto_pp = @grade_adulto_pp, grade_adulto_p = @grade_adulto_p, grade_adulto_m = @grade_adulto_m,
+         grade_adulto_g = @grade_adulto_g, grade_adulto_gg = @grade_adulto_gg,
+         grade_infantil_2 = @grade_infantil_2, grade_infantil_4 = @grade_infantil_4,
+         grade_infantil_6 = @grade_infantil_6, grade_infantil_8 = @grade_infantil_8,
+         grade_infantil_10 = @grade_infantil_10, observacao = @observacao,
+         tamanho_detalhe = NULL, quantidade = NULL
+       WHERE id = @id AND pedido_id = @pedido_id`
+    ).run({
+      id: itemId,
+      pedido_id: pedidoId,
+      produto: input.produto,
+      gola: input.gola,
+      material: input.material,
+      cor_principal: input.cor_principal,
+      cor_secundaria: input.cor_secundaria,
+      manga: input.manga,
+      punho: input.punho,
+      tipo_personalizacao: JSON.stringify(input.tipo_personalizacao),
+      local_personalizacao: JSON.stringify(input.local_personalizacao),
+      grade_adulto_pp: input.grade_adulto_pp,
+      grade_adulto_p: input.grade_adulto_p,
+      grade_adulto_m: input.grade_adulto_m,
+      grade_adulto_g: input.grade_adulto_g,
+      grade_adulto_gg: input.grade_adulto_gg,
+      grade_infantil_2: input.grade_infantil_2,
+      grade_infantil_4: input.grade_infantil_4,
+      grade_infantil_6: input.grade_infantil_6,
+      grade_infantil_8: input.grade_infantil_8,
+      grade_infantil_10: input.grade_infantil_10,
+      observacao: input.observacao,
+    });
+  } else {
+    db.prepare(
+      `UPDATE itens SET
+         categoria = 'brinde', produto = @produto, tamanho_detalhe = @tamanho_detalhe,
+         quantidade = @quantidade, observacao = @observacao,
+         gola = NULL, material = NULL, cor_principal = NULL, cor_secundaria = NULL, manga = NULL, punho = NULL,
+         tipo_personalizacao = NULL, local_personalizacao = NULL,
+         grade_adulto_pp = 0, grade_adulto_p = 0, grade_adulto_m = 0, grade_adulto_g = 0, grade_adulto_gg = 0,
+         grade_infantil_2 = 0, grade_infantil_4 = 0, grade_infantil_6 = 0, grade_infantil_8 = 0, grade_infantil_10 = 0,
+         sub_os = NULL
+       WHERE id = @id AND pedido_id = @pedido_id`
+    ).run({
+      id: itemId,
+      pedido_id: pedidoId,
+      produto: input.produto,
+      tamanho_detalhe: input.tamanho_detalhe,
+      quantidade: input.quantidade,
+      observacao: input.observacao,
+    });
+  }
+  return getItem(pedidoId, itemId);
+}
+
 export function setItemDocxPath(itemId: number, docxPath: string) {
   db.prepare("UPDATE itens SET docx_path = ? WHERE id = ?").run(docxPath, itemId);
 }

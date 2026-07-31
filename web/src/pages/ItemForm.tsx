@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ClipboardList,
   Shirt,
@@ -18,6 +18,8 @@ import {
   Package,
   Tag,
   Hash,
+  Save,
+  X,
 } from "lucide-react";
 import { api, ApiError } from "../api";
 import { CheckboxGroup } from "../components/CheckboxGroup";
@@ -83,12 +85,66 @@ const EMPTY_BRINDE = {
   observacao: "",
 };
 
-export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (item: Item) => void }) {
+function itemToVestuarioForm(item: Item): typeof EMPTY_VESTUARIO {
+  return {
+    produto: item.produto,
+    gola: item.gola ?? "",
+    material: item.material ?? "",
+    cor_principal: item.cor_principal ?? "",
+    cor_secundaria: item.cor_secundaria ?? "",
+    manga: item.manga ?? "",
+    punho: item.punho ?? "",
+    tipo_personalizacao: item.tipo_personalizacao ?? [],
+    local_personalizacao: item.local_personalizacao ?? [],
+    grade_adulto_pp: item.grade_adulto_pp,
+    grade_adulto_p: item.grade_adulto_p,
+    grade_adulto_m: item.grade_adulto_m,
+    grade_adulto_g: item.grade_adulto_g,
+    grade_adulto_gg: item.grade_adulto_gg,
+    grade_infantil_2: item.grade_infantil_2,
+    grade_infantil_4: item.grade_infantil_4,
+    grade_infantil_6: item.grade_infantil_6,
+    grade_infantil_8: item.grade_infantil_8,
+    grade_infantil_10: item.grade_infantil_10,
+    observacao: item.observacao ?? "",
+  };
+}
+
+function itemToBrindeForm(item: Item): typeof EMPTY_BRINDE {
+  return {
+    produto: item.produto,
+    tamanho_detalhe: item.tamanho_detalhe ?? "",
+    quantidade: item.quantidade ?? 1,
+    observacao: item.observacao ?? "",
+  };
+}
+
+export function ItemForm({
+  pedidoId,
+  editingItem,
+  onAdded,
+  onUpdated,
+  onCancelEdit,
+}: {
+  pedidoId: number;
+  editingItem?: Item | null;
+  onAdded: (item: Item) => void;
+  onUpdated?: (item: Item) => void;
+  onCancelEdit?: () => void;
+}) {
   const [categoria, setCategoria] = useState<Categoria>("vestuario");
   const [vestuario, setVestuario] = useState(EMPTY_VESTUARIO);
   const [brinde, setBrinde] = useState(EMPTY_BRINDE);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!editingItem) return;
+    setCategoria(editingItem.categoria);
+    if (editingItem.categoria === "vestuario") setVestuario(itemToVestuarioForm(editingItem));
+    else setBrinde(itemToBrindeForm(editingItem));
+    setError(null);
+  }, [editingItem]);
 
   function setV<K extends keyof typeof EMPTY_VESTUARIO>(key: K, value: (typeof EMPTY_VESTUARIO)[K]) {
     setVestuario((f) => ({ ...f, [key]: value }));
@@ -103,12 +159,17 @@ export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (it
     setSaving(true);
     try {
       const payload = categoria === "vestuario" ? { categoria, ...vestuario } : { categoria, ...brinde };
-      const item = await api.addItem(pedidoId, payload);
-      onAdded(item);
+      if (editingItem) {
+        const item = await api.atualizarItem(pedidoId, editingItem.id, payload);
+        onUpdated?.(item);
+      } else {
+        const item = await api.addItem(pedidoId, payload);
+        onAdded(item);
+      }
       if (categoria === "vestuario") setVestuario(EMPTY_VESTUARIO);
       else setBrinde(EMPTY_BRINDE);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Erro ao adicionar item");
+      setError(err instanceof ApiError ? err.message : "Erro ao salvar item");
     } finally {
       setSaving(false);
     }
@@ -116,7 +177,7 @@ export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (it
 
   return (
     <form className="card" onSubmit={handleSubmit}>
-      <SectionTitle icon={ClipboardList}>2. Adicionar Item</SectionTitle>
+      <SectionTitle icon={ClipboardList}>{editingItem ? "Editar Item" : "2. Adicionar Item"}</SectionTitle>
       {error && <div className="alert error">{error}</div>}
 
       <div className="categoria-toggle">
@@ -321,8 +382,21 @@ export function ItemForm({ pedidoId, onAdded }: { pedidoId: number; onAdded: (it
       )}
 
       <div className="actions-row">
+        {editingItem && (
+          <button type="button" className="secondary" onClick={onCancelEdit} disabled={saving}>
+            <X size={16} /> Cancelar
+          </button>
+        )}
         <button className="primary" type="submit" disabled={saving}>
-          <Plus size={16} /> {saving ? "Adicionando..." : "Adicionar à Lista"}
+          {editingItem ? (
+            <>
+              <Save size={16} /> {saving ? "Salvando..." : "Salvar Alterações"}
+            </>
+          ) : (
+            <>
+              <Plus size={16} /> {saving ? "Adicionando..." : "Adicionar à Lista"}
+            </>
+          )}
         </button>
       </div>
     </form>
