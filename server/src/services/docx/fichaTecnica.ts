@@ -1,4 +1,4 @@
-import { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, ShadingType } from "docx";
+import { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, ShadingType, HeightRule } from "docx";
 import type { Item, Pedido } from "../../types.js";
 import {
   VESTUARIO_MODELOS,
@@ -21,6 +21,90 @@ function materialCaption(text: string) {
   return new Paragraph({
     spacing: { after: 80 },
     children: [new TextRun({ text, bold: true, size: 17, color: S.INK_SOFT, font: "Arial", characterSpacing: 6 })],
+  });
+}
+
+// Caixa pra colar a arte (frente e costas juntos numa imagem só). O rótulo
+// fica num parágrafo fixo no topo e as linhas em branco abaixo são
+// parágrafos de verdade (não margem de célula) — assim, ao clicar ali pra
+// colar uma imagem, o cursor cai nessas linhas e não empurra o rótulo.
+function pasteBox(width: number) {
+  const filler = [S.spacer(240), S.spacer(240), S.spacer(240)];
+  return new Table({
+    width: { size: width, type: WidthType.DXA },
+    columnWidths: [width],
+    borders: {
+      top: S.thinBorder(),
+      bottom: S.thinBorder(),
+      left: S.thinBorder(),
+      right: S.thinBorder(),
+      insideHorizontal: S.thinBorder(),
+      insideVertical: S.thinBorder(),
+    },
+    rows: [
+      new TableRow({
+        height: { value: 1900, rule: HeightRule.ATLEAST },
+        children: [
+          new TableCell({
+            width: { size: width, type: WidthType.DXA },
+            shading: { type: ShadingType.CLEAR, fill: S.GRAY_BAND, color: "auto" },
+            margins: { top: 90, bottom: 90, left: 110, right: 110 },
+            borders: S.cellBorders(),
+            children: [
+              new Paragraph({
+                spacing: { after: 80 },
+                children: [
+                  new TextRun({
+                    text: "COLE A ARTE AQUI (FRENTE E COSTAS)",
+                    bold: true,
+                    size: 15,
+                    color: S.INK,
+                    font: "Arial",
+                    characterSpacing: 4,
+                  }),
+                ],
+              }),
+              ...filler,
+            ],
+          }),
+        ],
+      }),
+    ],
+  });
+}
+
+function observacaoBox(width: number, text: string) {
+  const filler = [S.spacer(240), S.spacer(240)];
+  return new Table({
+    width: { size: width, type: WidthType.DXA },
+    columnWidths: [width],
+    borders: {
+      top: S.thinBorder(),
+      bottom: S.thinBorder(),
+      left: S.thinBorder(),
+      right: S.thinBorder(),
+      insideHorizontal: S.thinBorder(),
+      insideVertical: S.thinBorder(),
+    },
+    rows: [
+      new TableRow({
+        height: { value: 1900, rule: HeightRule.ATLEAST },
+        children: [
+          new TableCell({
+            width: { size: width, type: WidthType.DXA },
+            margins: { top: 90, bottom: 90, left: 110, right: 110 },
+            borders: S.cellBorders(),
+            children: [
+              new Paragraph({
+                spacing: { after: 80 },
+                children: [new TextRun({ text: text || "", size: 18, color: S.INK_SOFT, font: "Arial" })],
+              }),
+              ...filler,
+            ],
+          }),
+        ],
+      }),
+    ],
   });
 }
 
@@ -86,140 +170,91 @@ export function buildFichaTecnicaDoc(pedido: Pedido, item: Item): Document {
   );
   children.push(S.spacer(110));
 
-  // 3. GRADE DE TAMANHOS
+  // 3. GRADE DE TAMANHOS — infantil e adulto lado a lado (ocupa menos altura)
   children.push(S.sectionBanner("3. Grade de Tamanhos (Quantidade)"));
   children.push(S.spacer(140));
   const totalInfantil =
     item.grade_infantil_2 + item.grade_infantil_4 + item.grade_infantil_6 + item.grade_infantil_8 + item.grade_infantil_10;
-  children.push(materialCaption("INFANTIL"));
-  children.push(
-    S.dataTable({
-      headers: ["TAMANHO", "2", "4", "6", "8", "10", "TOTAL"],
-      rows: [["QUANT.", item.grade_infantil_2, item.grade_infantil_4, item.grade_infantil_6, item.grade_infantil_8, item.grade_infantil_10, totalInfantil]],
-    })
-  );
-  children.push(S.spacer(110));
   const totalAdulto =
     item.grade_adulto_pp + item.grade_adulto_p + item.grade_adulto_m + item.grade_adulto_g + item.grade_adulto_gg;
-  children.push(materialCaption("ADULTO"));
+  const gradeColWidths = S.scaleWidths(Array(7).fill(1), S.halfWidth());
   children.push(
-    S.dataTable({
-      headers: ["TAMANHO", "PP", "P", "M", "G", "GG", "TOTAL"],
-      rows: [["QUANT.", item.grade_adulto_pp, item.grade_adulto_p, item.grade_adulto_m, item.grade_adulto_g, item.grade_adulto_gg, totalAdulto]],
-    })
+    S.sideBySide(
+      [
+        materialCaption("INFANTIL"),
+        S.dataTable({
+          headers: ["TAMANHO", "2", "4", "6", "8", "10", "TOTAL"],
+          rows: [["QUANT.", item.grade_infantil_2, item.grade_infantil_4, item.grade_infantil_6, item.grade_infantil_8, item.grade_infantil_10, totalInfantil]],
+          colWidths: gradeColWidths,
+        }),
+      ],
+      [
+        materialCaption("ADULTO"),
+        S.dataTable({
+          headers: ["TAMANHO", "PP", "P", "M", "G", "GG", "TOTAL"],
+          rows: [["QUANT.", item.grade_adulto_pp, item.grade_adulto_p, item.grade_adulto_m, item.grade_adulto_g, item.grade_adulto_gg, totalAdulto]],
+          colWidths: gradeColWidths,
+        }),
+      ]
+    )
   );
   children.push(S.spacer(130));
   children.push(S.totalBox("TOTAL GERAL DE PEÇAS", totalInfantil + totalAdulto));
   children.push(S.spacer(150));
 
-  // 4. CONSUMO DE MATERIAL (PREVISÃO)
-  children.push(S.sectionBanner("4. Consumo de Material (Previsão)"));
-  children.push(S.spacer(140));
+  // 4. CONSUMO DE MATERIAL (PREVISÃO) + 5. CONTROLE DE CORTE — lado a lado,
+  // uma tabela só cada (sem quebrar em duas por falta de espaço)
+  const metadeConsumoCorte = S.halfWidth();
   children.push(
-    S.dataTable({
-      headers: ["MATERIAL", "PREVISTO", "UTILIZADO", "OBSERVAÇÕES"],
-      rows: [
-        ["Malha", "", "", ""],
-        ["Gola", "", "", ""],
-        ["Punho", "", "", ""],
-        ["Linha", "", "", ""],
-        ["DTF / Tinta", "", "", ""],
-        ["Papel Sublimático", "", "", ""],
-        ["Outros", "", "", ""],
-      ],
-      colWidths: [2674, 2505, 2505, 3103],
-      headerFill: S.INK,
-    })
-  );
-  children.push(S.spacer(130));
-
-  // 5. CONTROLE DE CORTE
-  children.push(S.sectionBanner("5. Controle de Corte"));
-  children.push(S.spacer(140));
-  children.push(
-    S.dataTable({
-      headers: ["TAMANHO", "CONFERIDO"],
-      rows: [["2", ""], ["4", ""], ["6", ""], ["8", ""], ["10", ""], ["PP", ""], ["P", ""], ["M", ""], ["G", ""], ["GG", ""]],
-      colWidths: [3061, 7726],
-      headerFill: S.INK,
-    })
-  );
-  children.push(S.spacer(130));
-
-  // 6. ARTE / ESTAMPA
-  children.push(S.sectionBanner("6. Arte / Estampa"));
-  children.push(S.spacer(140));
-  children.push(
-    new Table({
-      width: { size: S.CONTENT_WIDTH_DXA, type: WidthType.DXA },
-      columnWidths: [S.CONTENT_WIDTH_DXA / 2, S.CONTENT_WIDTH_DXA / 2],
-      borders: {
-        top: S.thinBorder(),
-        bottom: S.thinBorder(),
-        left: S.thinBorder(),
-        right: S.thinBorder(),
-        insideHorizontal: S.thinBorder(),
-        insideVertical: S.thinBorder(),
-      },
-      rows: [
-        new TableRow({
-          children: ["FRENTE", "COSTAS"].map(
-            (label) =>
-              new TableCell({
-                width: { size: S.CONTENT_WIDTH_DXA / 2, type: WidthType.DXA },
-                shading: { type: ShadingType.CLEAR, fill: S.GRAY_BAND, color: "auto" },
-                margins: { top: 70, bottom: 900, left: 100, right: 100 },
-                borders: S.cellBorders(),
-                children: [
-                  new Paragraph({
-                    children: [new TextRun({ text: label, bold: true, size: 17, color: S.INK, font: "Arial" })],
-                  }),
-                ],
-              })
-          ),
-        }),
-      ],
-    })
-  );
-  children.push(S.spacer(130));
-
-  // 7. OBSERVAÇÕES IMPORTANTES
-  children.push(S.sectionBanner("7. Observações Importantes"));
-  children.push(S.spacer(140));
-  children.push(
-    new Table({
-      width: { size: S.CONTENT_WIDTH_DXA, type: WidthType.DXA },
-      columnWidths: [S.CONTENT_WIDTH_DXA],
-      borders: {
-        top: S.thinBorder(),
-        bottom: S.thinBorder(),
-        left: S.thinBorder(),
-        right: S.thinBorder(),
-        insideHorizontal: S.thinBorder(),
-        insideVertical: S.thinBorder(),
-      },
-      rows: [
-        new TableRow({
-          children: [
-            new TableCell({
-              width: { size: S.CONTENT_WIDTH_DXA, type: WidthType.DXA },
-              margins: { top: 100, bottom: 650, left: 120, right: 120 },
-              borders: S.cellBorders(),
-              children: [
-                new Paragraph({
-                  children: [new TextRun({ text: item.observacao ?? "", size: 18, color: S.INK_SOFT, font: "Arial" })],
-                }),
-              ],
-            }),
+    S.sideBySide(
+      [
+        S.sectionBanner("4. Consumo de Material", metadeConsumoCorte),
+        S.spacer(100),
+        S.dataTable({
+          headers: ["MATERIAL", "PREVISTO", "UTILIZ.", "OBS."],
+          rows: [
+            ["Malha", "", "", ""],
+            ["Gola", "", "", ""],
+            ["Punho", "", "", ""],
+            ["Linha", "", "", ""],
+            ["DTF / Tinta", "", "", ""],
+            ["Papel Sublimático", "", "", ""],
+            ["Outros", "", "", ""],
           ],
+          colWidths: S.scaleWidths([2674, 2505, 2505, 3103], metadeConsumoCorte),
+          headerFill: S.INK,
         }),
       ],
-    })
+      [
+        S.sectionBanner("5. Controle de Corte", metadeConsumoCorte),
+        S.spacer(100),
+        S.dataTable({
+          headers: ["TAMANHO", "CONFERIDO"],
+          rows: [["2", ""], ["4", ""], ["6", ""], ["8", ""], ["10", ""], ["PP", ""], ["P", ""], ["M", ""], ["G", ""], ["GG", ""]],
+          colWidths: S.scaleWidths([3061, 7726], metadeConsumoCorte),
+          headerFill: S.INK,
+        }),
+      ]
+    )
   );
   children.push(S.spacer(130));
 
-  // 8. RESPONSÁVEIS
-  children.push(S.sectionBanner("8. Responsáveis"));
+  // 6. ARTE / ESTAMPA + OBSERVAÇÕES — lado a lado, cada um numa caixa só
+  // (a foto da arte já traz frente e costas juntas, e a observação sobe
+  // pra dividir a linha em vez de ficar numa faixa inteira sozinha)
+  children.push(S.sectionBanner("6. Arte / Estampa e Observações"));
+  children.push(S.spacer(140));
+  const metadeArteObs = S.halfWidth();
+  children.push(
+    S.sideBySide(
+      [materialCaption("ARTE (FRENTE E COSTAS)"), pasteBox(metadeArteObs)],
+      [materialCaption("OBSERVAÇÕES"), observacaoBox(metadeArteObs, item.observacao ?? "")]
+    )
+  );
+  children.push(S.spacer(130));
+
+  // 7. RESPONSÁVEIS
+  children.push(S.sectionBanner("7. Responsáveis"));
   children.push(S.spacer(140));
   children.push(
     S.dataTable({
