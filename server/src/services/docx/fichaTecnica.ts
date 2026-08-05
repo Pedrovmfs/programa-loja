@@ -8,7 +8,7 @@ import {
   MANGA_OPCOES,
   PUNHO_OPCOES,
   TIPO_PERSONALIZACAO_OPCOES,
-  LOCAL_PERSONALIZACAO_OPCOES,
+  localPersonalizacaoOpcoes,
 } from "../../types.js";
 import * as S from "./shared.js";
 import { loadLogoBuffer } from "./logo.js";
@@ -82,7 +82,11 @@ export function buildFichaTecnicaDoc(pedido: Pedido, item: Item): Document {
     S.checkboxParagraph("Tipo de Personalização:", TIPO_PERSONALIZACAO_OPCOES, new Set(item.tipo_personalizacao ?? []))
   );
   children.push(
-    S.checkboxParagraph("Local da Personalização:", LOCAL_PERSONALIZACAO_OPCOES, new Set(item.local_personalizacao ?? []))
+    S.checkboxParagraph(
+      "Local da Personalização:",
+      localPersonalizacaoOpcoes(item.produto),
+      new Set(item.local_personalizacao ?? [])
+    )
   );
   children.push(S.spacer(110));
 

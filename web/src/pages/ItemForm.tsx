@@ -34,7 +34,7 @@ import {
   MANGA_OPCOES,
   PUNHO_OPCOES,
   TIPO_PERSONALIZACAO_OPCOES,
-  LOCAL_PERSONALIZACAO_OPCOES,
+  localPersonalizacaoOpcoes,
   BRINDE_PRODUTOS,
 } from "../types";
 
@@ -159,18 +159,23 @@ export function ItemForm({
     manga: true,
     punho: true,
   };
+  const localOpcoes = localPersonalizacaoOpcoes(vestuario.produto);
 
   function handleProdutoChange(produto: string) {
     // reseta gola/manga/punho ao trocar de modelo — evita carregar um valor
     // que não faz sentido pro novo tipo de peça (ex: "Manga Longa" ao trocar
     // de Camiseta pra Short, que nem tem manga)
     const novosCampos = MODELO_CAMPOS[produto as keyof typeof MODELO_CAMPOS] ?? { gola: true, manga: true, punho: true };
+    const novosLocais = localPersonalizacaoOpcoes(produto);
     setVestuario((f) => ({
       ...f,
       produto,
       gola: novosCampos.gola ? f.gola : "",
       manga: novosCampos.manga ? f.manga : "",
       punho: novosCampos.punho ? f.punho : "",
+      // remove locais de personalização que não existem mais no novo modelo
+      // (ex: "Manga Direita" selecionado e depois trocou pra Short)
+      local_personalizacao: f.local_personalizacao.filter((l) => novosLocais.includes(l)),
     }));
   }
 
@@ -208,7 +213,7 @@ export function ItemForm({
           className={categoria === "vestuario" ? "active" : ""}
           onClick={() => setCategoria("vestuario")}
         >
-          <Shirt size={16} /> Vestuário (gera Ficha Técnica)
+          <Shirt size={16} /> Vestuário
         </button>
         <button
           type="button"
@@ -216,7 +221,7 @@ export function ItemForm({
           className={categoria === "brinde" ? "active" : ""}
           onClick={() => setCategoria("brinde")}
         >
-          <Gift size={16} /> Brinde (entra só no resumo)
+          <Gift size={16} /> Brinde
         </button>
       </div>
 
@@ -303,7 +308,7 @@ export function ItemForm({
           <CheckboxGroup
             label="Local da Personalização"
             icon={MapPin}
-            options={LOCAL_PERSONALIZACAO_OPCOES}
+            options={localOpcoes}
             value={vestuario.local_personalizacao}
             onChange={(v) => setV("local_personalizacao", v)}
           />

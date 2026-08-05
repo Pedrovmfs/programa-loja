@@ -130,3 +130,15 @@ export const LOCAL_PERSONALIZACAO_OPCOES = [
   "Gola",
   "Barra",
 ] as const;
+
+// Mesma lógica do MODELO_CAMPOS: não faz sentido oferecer "Manga
+// Direita/Esquerda" como local de personalização num modelo sem manga
+// (Regata, Colete, Short, Machão), nem "Gola" num modelo sem gola (Short).
+export function localPersonalizacaoOpcoes(produto: string): readonly string[] {
+  const campos = MODELO_CAMPOS[produto as keyof typeof MODELO_CAMPOS];
+  return LOCAL_PERSONALIZACAO_OPCOES.filter((opt) => {
+    if ((opt === "Manga Direita" || opt === "Manga Esquerda") && campos && !campos.manga) return false;
+    if (opt === "Gola" && campos && !campos.gola) return false;
+    return true;
+  });
+}
