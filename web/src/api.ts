@@ -48,6 +48,7 @@ export const api = {
     request<Pedido>(`/pedidos/${pedidoId}`, { method: "PUT", body: JSON.stringify(input) }),
   getPedido: (id: number) => request<{ pedido: Pedido; itens: Item[] }>(`/pedidos/${id}`),
   listarPedidos: () => request<Pedido[]>("/pedidos"),
+  excluirPedido: (id: number) => request<void>(`/pedidos/${id}`, { method: "DELETE" }),
   addItem: (pedidoId: number, input: Record<string, unknown>) =>
     request<Item>(`/pedidos/${pedidoId}/itens`, { method: "POST", body: JSON.stringify(input) }),
   atualizarItem: (pedidoId: number, itemId: number, input: Record<string, unknown>) =>

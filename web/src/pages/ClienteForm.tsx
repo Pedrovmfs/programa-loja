@@ -73,7 +73,7 @@ export function ClienteForm({
       <SectionTitle icon={User}>{editMode ? "Dados do Cliente" : "1. Dados do Cliente"}</SectionTitle>
       {error && <div className="alert error">{error}</div>}
       <div className="field-grid">
-        <div className="field">
+        <div className="field" style={{ gridColumn: "span 2" }}>
           <FieldLabel icon={User}>Cliente *</FieldLabel>
           <input value={form.cliente} onChange={(e) => set("cliente", e.target.value)} required />
         </div>

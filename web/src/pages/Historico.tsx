@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { History, FileText, Pencil } from "lucide-react";
+import { History, FileText, Pencil, Trash2 } from "lucide-react";
 import { api, ApiError } from "../api";
 import type { Pedido } from "../types";
 import { SectionTitle } from "../components/SectionTitle";
@@ -9,6 +9,7 @@ export function Historico({ onEditar }: { onEditar: (pedidoId: number) => void }
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [excluindoId, setExcluindoId] = useState<number | null>(null);
 
   useEffect(() => {
     api
@@ -17,6 +18,20 @@ export function Historico({ onEditar }: { onEditar: (pedidoId: number) => void }
       .catch((err) => setError(err instanceof ApiError ? err.message : "Erro ao carregar pedidos"))
       .finally(() => setLoading(false));
   }, []);
+
+  async function handleExcluir(pedido: Pedido) {
+    if (!confirm(`Excluir o rascunho de "${pedido.cliente}"? Essa ação não pode ser desfeita.`)) return;
+    setError(null);
+    setExcluindoId(pedido.id);
+    try {
+      await api.excluirPedido(pedido.id);
+      setPedidos((prev) => prev.filter((p) => p.id !== pedido.id));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Erro ao excluir pedido");
+    } finally {
+      setExcluindoId(null);
+    }
+  }
 
   return (
     <div className="card">
@@ -60,10 +75,20 @@ export function Historico({ onEditar }: { onEditar: (pedidoId: number) => void }
                     "—"
                   )}
                 </td>
-                <td>
+                <td className="row-actions">
                   <button type="button" className="link-edit" onClick={() => onEditar(p.id)}>
                     <Pencil size={13} /> Editar
                   </button>
+                  {p.status === "rascunho" && (
+                    <button
+                      type="button"
+                      className="link-danger"
+                      disabled={excluindoId === p.id}
+                      onClick={() => handleExcluir(p)}
+                    >
+                      <Trash2 size={13} /> {excluindoId === p.id ? "Excluindo..." : "Excluir"}
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

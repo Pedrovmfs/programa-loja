@@ -154,6 +154,13 @@ export function removeItem(pedidoId: number, itemId: number): boolean {
   return result.changes > 0;
 }
 
+// Só usado pra rascunho (sem número de OS, sem documento gerado) — os
+// itens somem junto por causa do ON DELETE CASCADE da tabela itens.
+export function deletePedido(id: number): boolean {
+  const result = db.prepare("DELETE FROM pedidos WHERE id = ?").run(id);
+  return result.changes > 0;
+}
+
 export function updatePedido(pedidoId: number, input: PedidoInput): Pedido {
   db.prepare(
     `UPDATE pedidos SET

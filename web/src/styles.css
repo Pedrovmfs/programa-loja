@@ -261,12 +261,28 @@ main {
   font-weight: 700;
 }
 
+.grade-table td {
+  padding: 4px;
+}
+
 .grade-table input {
   width: 100%;
-  border: none;
+  border: 1px solid #e4e4e7;
+  border-radius: 4px;
   text-align: center;
   font-size: 14px;
-  background: transparent;
+  padding: 5px 4px;
+  background: #fff;
+}
+
+.grade-table input:hover {
+  border-color: #d4d4d8;
+}
+
+.grade-table input:focus {
+  border-color: #e8590c;
+  outline: none;
+  box-shadow: 0 0 0 2px #fde5d6;
 }
 
 .categoria-toggle {
@@ -472,14 +488,21 @@ table.itens-table td {
 .doc-links a {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  color: #e8590c;
+  gap: 8px;
+  color: #b8440a;
   font-weight: 600;
+  font-size: 14px;
   text-decoration: none;
+  background: #fff4ec;
+  border: 1px solid #fcd9bd;
+  border-radius: 8px;
+  padding: 10px 16px;
+  transition: background-color 0.1s, border-color 0.1s;
 }
 
 .doc-links a:hover {
-  text-decoration: underline;
+  background: #ffe8d5;
+  border-color: #e8590c;
 }
 
 .os-number {

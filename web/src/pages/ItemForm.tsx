@@ -137,7 +137,15 @@ export function ItemForm({
   const [vestuario, setVestuario] = useState(EMPTY_VESTUARIO);
   const [brinde, setBrinde] = useState(EMPTY_BRINDE);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+
+  function fieldClass(name: string) {
+    return fieldErrors[name] ? "field error" : "field";
+  }
+  function fieldErrorMsg(name: string) {
+    return fieldErrors[name] ? <p className="error-text">{fieldErrors[name]}</p> : null;
+  }
 
   useEffect(() => {
     if (!editingItem) return;
@@ -145,13 +153,30 @@ export function ItemForm({
     if (editingItem.categoria === "vestuario") setVestuario(itemToVestuarioForm(editingItem));
     else setBrinde(itemToBrindeForm(editingItem));
     setError(null);
+    setFieldErrors({});
   }, [editingItem]);
+
+  function clearFieldError(key: string) {
+    setFieldErrors((f) => {
+      if (!(key in f)) return f;
+      const { [key]: _removed, ...rest } = f;
+      return rest;
+    });
+  }
 
   function setV<K extends keyof typeof EMPTY_VESTUARIO>(key: K, value: (typeof EMPTY_VESTUARIO)[K]) {
     setVestuario((f) => ({ ...f, [key]: value }));
+    clearFieldError(key);
   }
   function setB<K extends keyof typeof EMPTY_BRINDE>(key: K, value: (typeof EMPTY_BRINDE)[K]) {
     setBrinde((f) => ({ ...f, [key]: value }));
+    clearFieldError(key);
+  }
+
+  function handleCategoriaChange(next: Categoria) {
+    setCategoria(next);
+    setFieldErrors({});
+    setError(null);
   }
 
   const campos = MODELO_CAMPOS[vestuario.produto as keyof typeof MODELO_CAMPOS] ?? {
@@ -177,11 +202,15 @@ export function ItemForm({
       // (ex: "Manga Direita" selecionado e depois trocou pra Short)
       local_personalizacao: f.local_personalizacao.filter((l) => novosLocais.includes(l)),
     }));
+    clearFieldError("produto");
+    clearFieldError("gola");
+    clearFieldError("manga");
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
     setSaving(true);
     try {
       const payload = categoria === "vestuario" ? { categoria, ...vestuario } : { categoria, ...brinde };
@@ -195,7 +224,17 @@ export function ItemForm({
       if (categoria === "vestuario") setVestuario(EMPTY_VESTUARIO);
       else setBrinde(EMPTY_BRINDE);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Erro ao salvar item");
+      if (err instanceof ApiError && err.issues.length > 0) {
+        const map: Record<string, string> = {};
+        for (const issue of err.issues) {
+          const key = String(issue.path[0]);
+          if (!map[key]) map[key] = issue.message;
+        }
+        setFieldErrors(map);
+        setError("Corrija os campos destacados abaixo.");
+      } else {
+        setError(err instanceof ApiError ? err.message : "Erro ao salvar item");
+      }
     } finally {
       setSaving(false);
     }
@@ -211,7 +250,7 @@ export function ItemForm({
           type="button"
           data-cat="vestuario"
           className={categoria === "vestuario" ? "active" : ""}
-          onClick={() => setCategoria("vestuario")}
+          onClick={() => handleCategoriaChange("vestuario")}
         >
           <Shirt size={16} /> Vestuário
         </button>
@@ -219,7 +258,7 @@ export function ItemForm({
           type="button"
           data-cat="brinde"
           className={categoria === "brinde" ? "active" : ""}
-          onClick={() => setCategoria("brinde")}
+          onClick={() => handleCategoriaChange("brinde")}
         >
           <Gift size={16} /> Brinde
         </button>
@@ -228,7 +267,7 @@ export function ItemForm({
       {categoria === "vestuario" ? (
         <>
           <div className="field-grid">
-            <div className="field">
+            <div className={fieldClass("produto")}>
               <FieldLabel icon={Shirt}>Modelo *</FieldLabel>
               <select value={vestuario.produto} onChange={(e) => handleProdutoChange(e.target.value)}>
                 {VESTUARIO_MODELOS.map((m) => (
@@ -237,9 +276,10 @@ export function ItemForm({
                   </option>
                 ))}
               </select>
+              {fieldErrorMsg("produto")}
             </div>
             {campos.gola && (
-              <div className="field">
+              <div className={fieldClass("gola")}>
                 <FieldLabel icon={CircleDot}>Gola *</FieldLabel>
                 <select value={vestuario.gola} onChange={(e) => setV("gola", e.target.value)}>
                   <option value="">Selecione</option>
@@ -249,9 +289,10 @@ export function ItemForm({
                     </option>
                   ))}
                 </select>
+                {fieldErrorMsg("gola")}
               </div>
             )}
-            <div className="field">
+            <div className={fieldClass("material")}>
               <FieldLabel icon={Layers}>Material (Tecido) *</FieldLabel>
               <select value={vestuario.material} onChange={(e) => setV("material", e.target.value)}>
                 <option value="">Selecione</option>
@@ -261,17 +302,19 @@ export function ItemForm({
                   </option>
                 ))}
               </select>
+              {fieldErrorMsg("material")}
             </div>
-            <div className="field">
+            <div className={fieldClass("cor_principal")}>
               <FieldLabel icon={Palette}>Cor Principal *</FieldLabel>
               <input value={vestuario.cor_principal} onChange={(e) => setV("cor_principal", e.target.value)} />
+              {fieldErrorMsg("cor_principal")}
             </div>
             <div className="field">
               <FieldLabel icon={Droplet}>Cor Secundária</FieldLabel>
               <input value={vestuario.cor_secundaria} onChange={(e) => setV("cor_secundaria", e.target.value)} />
             </div>
             {campos.manga && (
-              <div className="field">
+              <div className={fieldClass("manga")}>
                 <FieldLabel icon={MoveHorizontal}>Manga *</FieldLabel>
                 <select value={vestuario.manga} onChange={(e) => setV("manga", e.target.value)}>
                   <option value="">Selecione</option>
@@ -281,6 +324,7 @@ export function ItemForm({
                     </option>
                   ))}
                 </select>
+                {fieldErrorMsg("manga")}
               </div>
             )}
             {campos.punho && (
@@ -313,8 +357,9 @@ export function ItemForm({
             onChange={(v) => setV("local_personalizacao", v)}
           />
 
-          <div className="field">
+          <div className={fieldClass("grade_adulto_pp")}>
             <FieldLabel icon={Ruler}>Grade de Tamanhos — Adulto</FieldLabel>
+            {fieldErrorMsg("grade_adulto_pp")}
             <table className="grade-table">
               <thead>
                 <tr>
@@ -379,7 +424,7 @@ export function ItemForm({
         </>
       ) : (
         <div className="field-grid">
-          <div className="field">
+          <div className={fieldClass("produto")}>
             <FieldLabel icon={Package}>Produto *</FieldLabel>
             <input list="brinde-produtos" value={brinde.produto} onChange={(e) => setB("produto", e.target.value)} />
             <datalist id="brinde-produtos">
@@ -387,12 +432,13 @@ export function ItemForm({
                 <option key={p} value={p} />
               ))}
             </datalist>
+            {fieldErrorMsg("produto")}
           </div>
           <div className="field">
             <FieldLabel icon={Tag}>Tamanho / Detalhe</FieldLabel>
             <input value={brinde.tamanho_detalhe} onChange={(e) => setB("tamanho_detalhe", e.target.value)} />
           </div>
-          <div className="field">
+          <div className={fieldClass("quantidade")}>
             <FieldLabel icon={Hash}>Quantidade *</FieldLabel>
             <input
               type="number"
@@ -400,6 +446,7 @@ export function ItemForm({
               value={brinde.quantidade}
               onChange={(e) => setB("quantidade", Number(e.target.value))}
             />
+            {fieldErrorMsg("quantidade")}
           </div>
           <div className="field" style={{ gridColumn: "1 / -1" }}>
             <FieldLabel icon={MessageSquare}>Observação</FieldLabel>

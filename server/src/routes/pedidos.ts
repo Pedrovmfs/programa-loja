@@ -10,6 +10,7 @@ import {
   removeItem,
   updatePedido,
   updateItem,
+  deletePedido,
 } from "../repository.js";
 import { finalizarPedido } from "../services/numbering.js";
 import { gerarDocumentos } from "../services/docx/index.js";
@@ -57,6 +58,18 @@ pedidosRouter.put("/:id", (req, res) => {
     console.error(err);
     res.status(500).json({ error: "internal_error" });
   }
+});
+
+// Só permite excluir rascunho — pedido finalizado já tem número de OS e
+// documentos gerados, é um registro de verdade, não dá pra apagar por aqui.
+pedidosRouter.delete("/:id", (req, res) => {
+  const pedido = getPedido(Number(req.params.id));
+  if (!pedido) return res.status(404).json({ error: "not_found" });
+  if (pedido.status !== "rascunho") {
+    return res.status(400).json({ error: "nao_e_rascunho", message: "Só é possível excluir pedidos em rascunho" });
+  }
+  deletePedido(pedido.id);
+  res.status(204).end();
 });
 
 pedidosRouter.post("/:id/itens", (req, res) => {
