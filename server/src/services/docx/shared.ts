@@ -210,12 +210,12 @@ export function infoTable(rows: [string, string][][]) {
 // ---------- Checkbox row (label + options) ----------
 export function checkboxParagraph(label: string, options: readonly string[], checkedSet: Set<string>) {
   const runs: TextRun[] = [];
-  runs.push(new TextRun({ text: label + "  ", bold: true, size: 18, color: INK, font: "Arial" }));
+  runs.push(new TextRun({ text: label + " ", bold: true, size: 18, color: INK, font: "Arial" }));
   options.forEach((opt, i) => {
     const checked = checkedSet.has(opt);
     runs.push(
       new TextRun({
-        text: (checked ? "☑ " : "☐ ") + opt + (i < options.length - 1 ? "    " : ""),
+        text: (checked ? "☑ " : "☐ ") + opt + (i < options.length - 1 ? "   " : ""),
         bold: checked,
         size: 18,
         color: checked ? ORANGE_DARK : INK_SOFT,
