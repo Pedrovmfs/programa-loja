@@ -17,7 +17,7 @@ export function subOsLabel(osNumber: number, subOs: number): string {
   return `${osNumber}.${subOs}`;
 }
 
-function materialCaption(text: string) {
+export function materialCaption(text: string) {
   return new Paragraph({
     spacing: { after: 80 },
     children: [new TextRun({ text, bold: true, size: 17, color: S.INK_SOFT, font: "Arial", characterSpacing: 6 })],
@@ -52,7 +52,7 @@ export function buildFichaTecnicaDoc(pedido: Pedido, item: Item): Document {
   // 1. DADOS DO PRODUTO
   const campos = MODELO_CAMPOS[item.produto as keyof typeof MODELO_CAMPOS] ?? { gola: true, manga: true, punho: true };
   children.push(S.sectionBanner("1. Dados do Produto"));
-  children.push(S.spacer(140));
+  children.push(S.spacer(100));
   children.push(S.checkboxParagraph("Modelo:", VESTUARIO_MODELOS, new Set([item.produto])));
   if (campos.gola) {
     children.push(S.checkboxParagraph("Tipo de Gola:", GOLA_OPCOES, new Set([item.gola ?? ""])));
@@ -66,18 +66,18 @@ export function buildFichaTecnicaDoc(pedido: Pedido, item: Item): Document {
       ],
     ])
   );
-  children.push(S.spacer(140));
+  children.push(S.spacer(90));
   if (campos.manga) {
     children.push(S.checkboxParagraph("Manga:", MANGA_OPCOES, new Set([item.manga ?? ""])));
   }
   if (campos.punho) {
     children.push(S.checkboxParagraph("Punho:", PUNHO_OPCOES, new Set([item.punho ?? ""])));
   }
-  children.push(S.spacer(110));
+  children.push(S.spacer(80));
 
   // 2. PERSONALIZAÇÃO
   children.push(S.sectionBanner("2. Personalização"));
-  children.push(S.spacer(140));
+  children.push(S.spacer(100));
   children.push(
     S.checkboxParagraph("Tipo de Personalização:", TIPO_PERSONALIZACAO_OPCOES, new Set(item.tipo_personalizacao ?? []))
   );
@@ -88,7 +88,7 @@ export function buildFichaTecnicaDoc(pedido: Pedido, item: Item): Document {
       new Set(item.local_personalizacao ?? [])
     )
   );
-  children.push(S.spacer(110));
+  children.push(S.spacer(80));
 
   // 3. GRADE DE TAMANHOS
   children.push(S.sectionBanner("3. Grade de Tamanhos (Quantidade)"));

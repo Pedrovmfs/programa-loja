@@ -124,10 +124,10 @@ export function orangeDivider() {
 }
 
 // ---------- Section banner ("1. DADOS DO PRODUTO") ----------
-export function sectionBanner(text: string) {
+export function sectionBanner(text: string, width: number = CONTENT_WIDTH_DXA) {
   return new Table({
-    width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
-    columnWidths: [CONTENT_WIDTH_DXA],
+    width: { size: width, type: WidthType.DXA },
+    columnWidths: [width],
     borders: {
       top: noBorder(),
       bottom: noBorder(),
@@ -140,7 +140,7 @@ export function sectionBanner(text: string) {
       new TableRow({
         children: [
           new TableCell({
-            width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
+            width: { size: width, type: WidthType.DXA },
             shading: { type: ShadingType.CLEAR, fill: INK, color: "auto" },
             margins: { top: 70, bottom: 70, left: 140, right: 140 },
             borders: cellBorders(INK),
@@ -223,7 +223,7 @@ export function checkboxParagraph(label: string, options: readonly string[], che
       })
     );
   });
-  return new Paragraph({ spacing: { after: 140 }, children: runs });
+  return new Paragraph({ spacing: { after: 90 }, children: runs });
 }
 
 // ---------- Generic labeled data table (grade de tamanhos, consumo, brindes...) ----------
@@ -331,6 +331,67 @@ export function dataTable({
 }
 
 // ---------- Caixa de destaque (total geral) ----------
+// ---------- Divide larguras de coluna proporcionalmente pra um novo total ----------
+// Usado quando uma tabela pensada pra largura cheia da página precisa
+// encolher pra caber lado a lado com outra (mantém a proporção original
+// entre as colunas).
+export function scaleWidths(widths: number[], newTotal: number): number[] {
+  const total = widths.reduce((a, b) => a + b, 0);
+  const scaled = widths.map((w) => Math.floor((w / total) * newTotal));
+  const diff = newTotal - scaled.reduce((a, b) => a + b, 0);
+  scaled[scaled.length - 1] += diff;
+  return scaled;
+}
+
+// Largura de cada metade quando dois blocos ficam lado a lado (com um
+// respiro entre eles).
+export function halfWidth(gap = 220): number {
+  return Math.floor((CONTENT_WIDTH_DXA - gap) / 2);
+}
+
+// ---------- Layout de duas colunas (blocos lado a lado, ocupando menos altura) ----------
+export function sideBySide(left: (Paragraph | Table)[], right: (Paragraph | Table)[], gap = 220) {
+  const colWidth = halfWidth(gap);
+  return new Table({
+    width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
+    columnWidths: [colWidth, gap, colWidth],
+    borders: {
+      top: noBorder(),
+      bottom: noBorder(),
+      left: noBorder(),
+      right: noBorder(),
+      insideHorizontal: noBorder(),
+      insideVertical: noBorder(),
+    },
+    rows: [
+      new TableRow({
+        children: [
+          new TableCell({
+            width: { size: colWidth, type: WidthType.DXA },
+            borders: cellBorders("FFFFFF"),
+            margins: { top: 0, bottom: 0, left: 0, right: 0 },
+            verticalAlign: VerticalAlign.TOP,
+            children: left,
+          }),
+          new TableCell({
+            width: { size: gap, type: WidthType.DXA },
+            borders: cellBorders("FFFFFF"),
+            margins: { top: 0, bottom: 0, left: 0, right: 0 },
+            children: [new Paragraph({ children: [] })],
+          }),
+          new TableCell({
+            width: { size: colWidth, type: WidthType.DXA },
+            borders: cellBorders("FFFFFF"),
+            margins: { top: 0, bottom: 0, left: 0, right: 0 },
+            verticalAlign: VerticalAlign.TOP,
+            children: right,
+          }),
+        ],
+      }),
+    ],
+  });
+}
+
 export function totalBox(label: string, value: string | number) {
   return new Table({
     width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },

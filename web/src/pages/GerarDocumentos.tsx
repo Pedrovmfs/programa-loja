@@ -12,10 +12,19 @@ interface Documentos {
 
 function documentosDoPedido(pedido: Pedido, itens: Item[]): Documentos | null {
   if (pedido.status !== "finalizado" || !pedido.capa_resumo_path) return null;
+  // Quando 2 itens compartilham a mesma ficha combinada, os dois apontam
+  // pro mesmo docx_path — remove duplicata pra não mostrar o link 2x.
+  const urls = itens.filter((i) => i.docx_path).map((i) => `/api/documentos/${i.docx_path}`);
   return {
     capaResumo: `/api/documentos/${pedido.capa_resumo_path}`,
-    fichas: itens.filter((i) => i.docx_path).map((i) => `/api/documentos/${i.docx_path}`),
+    fichas: Array.from(new Set(urls)),
   };
+}
+
+function labelFicha(url: string): string {
+  const nomeArquivo = url.split("/").pop() ?? "";
+  const semExtensao = nomeArquivo.replace(/\.docx$/i, "").replace(/^Ficha_Tecnica_/, "");
+  return semExtensao.replace(/_/g, " ");
 }
 
 export function GerarDocumentos({
@@ -75,9 +84,9 @@ export function GerarDocumentos({
             <a href={documentos.capaResumo} target="_blank" rel="noreferrer">
               <FileText size={16} /> Baixar Capa-Resumo do Pedido
             </a>
-            {documentos.fichas.map((url, idx) => (
+            {documentos.fichas.map((url) => (
               <a key={url} href={url} target="_blank" rel="noreferrer">
-                <FileText size={16} /> Baixar Ficha Técnica — item {idx + 1}
+                <FileText size={16} /> Baixar Ficha Técnica — {labelFicha(url)}
               </a>
             ))}
           </div>
