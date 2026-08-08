@@ -70,8 +70,16 @@ function modeloBlock(numero: number, letra: string, item: Item) {
     S.infoTable([[["Cor Principal", item.cor_principal ?? ""], ["Cor Secundária", item.cor_secundaria ?? ""]]])
   );
   children.push(S.spacer(80));
-  if (campos.manga) children.push(S.checkboxParagraph("Manga:", MANGA_OPCOES, new Set([item.manga ?? ""])));
-  if (campos.punho) children.push(S.checkboxParagraph("Punho:", PUNHO_OPCOES, new Set([item.punho ?? ""])));
+  if (campos.manga || campos.punho) {
+    // Manga e Punho são sempre curtos (2 opções cada) e sempre aparecem
+    // juntos ou nenhum dos dois — cabem lado a lado numa linha só.
+    children.push(
+      S.sideBySide(
+        campos.manga ? [S.checkboxParagraph("Manga:", MANGA_OPCOES, new Set([item.manga ?? ""]))] : [],
+        campos.punho ? [S.checkboxParagraph("Punho:", PUNHO_OPCOES, new Set([item.punho ?? ""]))] : []
+      )
+    );
+  }
   children.push(
     S.checkboxParagraph("Personalização:", TIPO_PERSONALIZACAO_OPCOES, new Set(item.tipo_personalizacao ?? []))
   );
