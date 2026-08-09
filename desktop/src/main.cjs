@@ -269,6 +269,10 @@ async function launchMainWindow(config) {
   });
   buildMenu(win, config);
   loadWithRetry(win, targetUrl);
+
+  // checagem automática, silenciosa, alguns segundos depois de abrir —
+  // não atrapalha a inicialização e não incomoda se não tiver nada novo
+  setTimeout(() => verificarAtualizacoes({ manual: false }), 8000);
 }
 
 async function handleEscolherPastaDeDados(win, config) {
@@ -310,6 +314,10 @@ async function handleEscolherPastaDeDados(win, config) {
 
 function buildMenu(win, config) {
   const submenu = [
+    {
+      label: "Verificar Atualizações",
+      click: () => verificarAtualizacoes({ manual: true }),
+    },
     {
       label: "Alterar modo de conexão",
       click: async () => {
