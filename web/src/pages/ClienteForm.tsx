@@ -99,10 +99,22 @@ export function ClienteForm({
         </div>
         <div className="field">
           <FieldLabel icon={AlertTriangle}>Prioridade</FieldLabel>
-          <select value={form.prioridade} onChange={(e) => set("prioridade", e.target.value as "normal" | "urgente")}>
-            <option value="normal">Normal</option>
-            <option value="urgente">Urgente</option>
-          </select>
+          <div className="prioridade-toggle">
+            <button
+              type="button"
+              className={form.prioridade === "normal" ? "active" : ""}
+              onClick={() => set("prioridade", "normal")}
+            >
+              Normal
+            </button>
+            <button
+              type="button"
+              className={form.prioridade === "urgente" ? "active" : ""}
+              onClick={() => set("prioridade", "urgente")}
+            >
+              Urgente
+            </button>
+          </div>
         </div>
       </div>
       <div className="actions-row">

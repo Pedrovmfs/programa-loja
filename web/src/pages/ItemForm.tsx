@@ -25,6 +25,7 @@ import { api, ApiError } from "../api";
 import { CheckboxGroup } from "../components/CheckboxGroup";
 import { SectionTitle } from "../components/SectionTitle";
 import { FieldLabel } from "../components/FieldLabel";
+import { QuantityStepper } from "../components/QuantityStepper";
 import type { Item } from "../types";
 import {
   VESTUARIO_MODELOS,
@@ -207,6 +208,9 @@ export function ItemForm({
     clearFieldError("manga");
   }
 
+  const totalAdulto = ADULTO_TAMANHOS.reduce((sum, t) => sum + vestuario[t.key], 0);
+  const totalInfantil = INFANTIL_TAMANHOS.reduce((sum, t) => sum + vestuario[t.key], 0);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -358,7 +362,14 @@ export function ItemForm({
           />
 
           <div className={fieldClass("grade_adulto_pp")}>
-            <FieldLabel icon={Ruler}>Grade de Tamanhos — Adulto</FieldLabel>
+            <div className="field-label-row">
+              <FieldLabel icon={Ruler}>Grade de Tamanhos — Adulto</FieldLabel>
+              {totalAdulto > 0 && (
+                <span className="qty-total-badge">
+                  {totalAdulto} peça{totalAdulto !== 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
             {fieldErrorMsg("grade_adulto_pp")}
             <table className="grade-table">
               <thead>
@@ -371,13 +382,8 @@ export function ItemForm({
               <tbody>
                 <tr>
                   {ADULTO_TAMANHOS.map((t) => (
-                    <td key={t.key}>
-                      <input
-                        type="number"
-                        min={0}
-                        value={vestuario[t.key]}
-                        onChange={(e) => setV(t.key, Number(e.target.value))}
-                      />
+                    <td key={t.key} className={vestuario[t.key] > 0 ? "grade-filled" : undefined}>
+                      <QuantityStepper value={vestuario[t.key]} onChange={(v) => setV(t.key, v)} />
                     </td>
                   ))}
                 </tr>
@@ -386,7 +392,14 @@ export function ItemForm({
           </div>
 
           <div className="field">
-            <FieldLabel icon={Baby}>Grade de Tamanhos — Infantil</FieldLabel>
+            <div className="field-label-row">
+              <FieldLabel icon={Baby}>Grade de Tamanhos — Infantil</FieldLabel>
+              {totalInfantil > 0 && (
+                <span className="qty-total-badge">
+                  {totalInfantil} peça{totalInfantil !== 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
             <table className="grade-table">
               <thead>
                 <tr>
@@ -398,13 +411,8 @@ export function ItemForm({
               <tbody>
                 <tr>
                   {INFANTIL_TAMANHOS.map((t) => (
-                    <td key={t.key}>
-                      <input
-                        type="number"
-                        min={0}
-                        value={vestuario[t.key]}
-                        onChange={(e) => setV(t.key, Number(e.target.value))}
-                      />
+                    <td key={t.key} className={vestuario[t.key] > 0 ? "grade-filled" : undefined}>
+                      <QuantityStepper value={vestuario[t.key]} onChange={(v) => setV(t.key, v)} />
                     </td>
                   ))}
                 </tr>
@@ -440,12 +448,7 @@ export function ItemForm({
           </div>
           <div className={fieldClass("quantidade")}>
             <FieldLabel icon={Hash}>Quantidade *</FieldLabel>
-            <input
-              type="number"
-              min={1}
-              value={brinde.quantidade}
-              onChange={(e) => setB("quantidade", Number(e.target.value))}
-            />
+            <QuantityStepper value={brinde.quantidade} onChange={(v) => setB("quantidade", v)} min={1} />
             {fieldErrorMsg("quantidade")}
           </div>
           <div className="field" style={{ gridColumn: "1 / -1" }}>

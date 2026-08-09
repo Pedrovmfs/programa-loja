@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { ClienteForm } from "./pages/ClienteForm";
@@ -17,6 +17,13 @@ export default function App() {
   const [itens, setItens] = useState<Item[]>([]);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [justAddedId, setJustAddedId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (justAddedId === null) return;
+    const timer = setTimeout(() => setJustAddedId(null), 1500);
+    return () => clearTimeout(timer);
+  }, [justAddedId]);
 
   function resetNovoPedido() {
     setPedido(null);
@@ -41,6 +48,11 @@ export default function App() {
     } catch (err) {
       setLoadError(err instanceof ApiError ? err.message : "Erro ao carregar pedido");
     }
+  }
+
+  function handleItemAdded(item: Item) {
+    setItens((prev) => [...prev, item]);
+    setJustAddedId(item.id);
   }
 
   function handleItemUpdated(item: Item) {
@@ -77,7 +89,7 @@ export default function App() {
                 <ItemForm
                   pedidoId={pedido.id}
                   editingItem={editingItem}
-                  onAdded={(item) => setItens((prev) => [...prev, item])}
+                  onAdded={handleItemAdded}
                   onUpdated={handleItemUpdated}
                   onCancelEdit={() => setEditingItem(null)}
                 />
@@ -85,6 +97,7 @@ export default function App() {
                   pedidoId={pedido.id}
                   itens={itens}
                   editingItemId={editingItem?.id}
+                  justAddedId={justAddedId}
                   onRemoved={handleItemRemoved}
                   onEdit={setEditingItem}
                 />

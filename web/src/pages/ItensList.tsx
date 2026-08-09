@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ListChecks, Shirt, Pencil } from "lucide-react";
+import { ListChecks, Shirt, Pencil, Trash2 } from "lucide-react";
 import { api, ApiError } from "../api";
 import type { Item } from "../types";
 import { SectionTitle } from "../components/SectionTitle";
@@ -30,12 +30,14 @@ export function ItensList({
   pedidoId,
   itens,
   editingItemId,
+  justAddedId,
   onRemoved,
   onEdit,
 }: {
   pedidoId: number;
   itens: Item[];
   editingItemId?: number | null;
+  justAddedId?: number | null;
   onRemoved: (itemId: number) => void;
   onEdit: (item: Item) => void;
 }) {
@@ -79,7 +81,15 @@ export function ItensList({
           </thead>
           <tbody>
             {itens.map((item, idx) => (
-              <tr key={item.id} className={editingItemId === item.id ? "editing" : ""}>
+              <tr
+                key={item.id}
+                className={[
+                  editingItemId === item.id ? "editing" : "",
+                  justAddedId === item.id ? "just-added" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
                 <td>{idx + 1}</td>
                 <td>
                   <span className={`badge ${item.categoria}`}>{item.categoria}</span>
@@ -97,7 +107,7 @@ export function ItensList({
                     disabled={removingId === item.id}
                     onClick={() => handleRemove(item.id)}
                   >
-                    {removingId === item.id ? "Removendo..." : "Remover"}
+                    <Trash2 size={13} /> {removingId === item.id ? "Removendo..." : "Remover"}
                   </button>
                 </td>
               </tr>

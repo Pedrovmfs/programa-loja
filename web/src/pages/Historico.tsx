@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { History, FileText, Pencil, Trash2 } from "lucide-react";
+import { History, FileText, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { api, ApiError } from "../api";
 import type { Pedido } from "../types";
 import { SectionTitle } from "../components/SectionTitle";
@@ -56,9 +56,16 @@ export function Historico({ onEditar }: { onEditar: (pedidoId: number) => void }
           </thead>
           <tbody>
             {pedidos.map((p) => (
-              <tr key={p.id}>
+              <tr key={p.id} className={p.prioridade === "urgente" ? "urgente" : ""}>
                 <td>{p.os_number ?? "—"}</td>
-                <td>{p.cliente}</td>
+                <td>
+                  {p.cliente}
+                  {p.prioridade === "urgente" && (
+                    <span className="urgente-badge">
+                      <AlertTriangle size={11} /> Urgente
+                    </span>
+                  )}
+                </td>
                 <td>{p.vendedor}</td>
                 <td>{p.data_entrega}</td>
                 <td>
