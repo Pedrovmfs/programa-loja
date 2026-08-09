@@ -36,7 +36,8 @@
     "publish": {
       "provider": "github",
       "owner": "Pedrovmfs",
-      "repo": "programa-loja"
+      "repo": "programa-loja",
+      "draft": false
     },
     "win": {
       "target": [
