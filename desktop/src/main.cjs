@@ -9,6 +9,92 @@ const { readConfig, writeConfig, clearConfig, updateConfig } = require("./config
 const userDataDir = app.getPath("userData");
 let serverProcess = null;
 
+// Auto-update: nunca pode derrubar o programa principal se der problema —
+// por isso o require fica protegido e toda checagem só roda se isso deu
+// certo E o app está empacotado (rodando via npm/electron direto em
+// desenvolvimento não tem instalador pra atualizar).
+let autoUpdater = null;
+try {
+  ({ autoUpdater } = require("electron-updater"));
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+} catch (err) {
+  console.error("electron-updater indisponível:", err);
+}
+
+let checagemManualEmAndamento = false;
+
+if (autoUpdater) {
+  autoUpdater.on("update-available", async (info) => {
+    const resultado = await dialog.showMessageBox({
+      type: "info",
+      title: "Atualização disponível",
+      buttons: ["Baixar agora", "Depois"],
+      defaultId: 0,
+      message: `Tem uma versão nova do programa (${info.version}).\n\nBaixar agora? O programa continua funcionando normalmente enquanto baixa.`,
+    });
+    if (resultado.response === 0) {
+      autoUpdater.downloadUpdate().catch((err) => console.error("Erro ao baixar atualização:", err));
+    } else {
+      checagemManualEmAndamento = false;
+    }
+  });
+
+  autoUpdater.on("update-not-available", () => {
+    if (checagemManualEmAndamento) {
+      dialog.showMessageBox({
+        type: "info",
+        title: "Tudo atualizado",
+        message: "Você já está com a versão mais recente do programa.",
+      });
+    }
+    checagemManualEmAndamento = false;
+  });
+
+  autoUpdater.on("error", (err) => {
+    console.error("Erro no auto-update:", err);
+    if (checagemManualEmAndamento) {
+      dialog.showMessageBox({
+        type: "error",
+        title: "Erro ao verificar atualização",
+        message: `Não consegui verificar atualizações agora: ${err?.message ?? err}`,
+      });
+    }
+    checagemManualEmAndamento = false;
+  });
+
+  autoUpdater.on("update-downloaded", async (info) => {
+    const resultado = await dialog.showMessageBox({
+      type: "info",
+      title: "Atualização pronta",
+      buttons: ["Reiniciar agora", "Depois"],
+      defaultId: 1,
+      message: `A versão ${info.version} foi baixada.\n\nReiniciar agora pra instalar? (leva poucos segundos)`,
+    });
+    if (resultado.response === 0) {
+      autoUpdater.quitAndInstall();
+    }
+  });
+}
+
+function verificarAtualizacoes({ manual }) {
+  if (!autoUpdater || !app.isPackaged) {
+    if (manual) {
+      dialog.showMessageBox({
+        type: "info",
+        title: "Verificar Atualizações",
+        message: "Essa checagem só funciona no programa instalado (.exe), não rodando em modo de desenvolvimento.",
+      });
+    }
+    return;
+  }
+  if (manual) checagemManualEmAndamento = true;
+  autoUpdater.checkForUpdates().catch((err) => {
+    console.error("Erro ao checar atualização:", err);
+    checagemManualEmAndamento = false;
+  });
+}
+
 function resourcePath(...segments) {
   const base = app.isPackaged ? process.resourcesPath : path.join(__dirname, "..", "resources");
   return path.join(base, ...segments);
