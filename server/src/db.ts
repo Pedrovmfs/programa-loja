@@ -44,6 +44,12 @@ db.exec(`
 
   INSERT OR IGNORE INTO counters (name, value) VALUES ('os', 0);
 
+  -- A loja já numerava os pedidos manualmente antes do programa, chegando
+  -- até a faixa de 4861. Continua a sequência de lá em vez de reiniciar do
+  -- 1 — só avança se o contador ainda estiver atrás (nunca recua, então
+  -- rodar isso de novo em qualquer atualização futura não tem efeito).
+  UPDATE counters SET value = 4861 WHERE name = 'os' AND value < 4861;
+
   CREATE TABLE IF NOT EXISTS pedidos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     os_number INTEGER UNIQUE,
