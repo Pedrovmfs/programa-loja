@@ -17,7 +17,7 @@ import {
 } from "../../types.js";
 import * as S from "./shared.js";
 import { loadLogoBuffer } from "./logo.js";
-import { subOsLabel, materialCaption } from "./fichaTecnica.js";
+import { materialCaption } from "./fichaTecnica.js";
 
 function pasteBox(width: number, label: string) {
   const filler = [S.spacer(160), S.spacer(160)];
@@ -133,15 +133,10 @@ export function buildFichaTecnicaDuplaDoc(pedido: Pedido, item1: Item, item2: It
   children.push(S.buildHeader(logoBuffer, "Ficha Técnica — 2 Modelos"));
   children.push(S.orangeDivider());
 
-  const subOsTexto = [item1, item2]
-    .filter((it) => pedido.os_number && it.sub_os)
-    .map((it) => subOsLabel(pedido.os_number as number, it.sub_os as number))
-    .join(", ");
-
   children.push(
     S.infoTable([
       [
-        ["Nº OS", subOsTexto || "—"],
+        ["Nº OS", pedido.os_number ? String(pedido.os_number) : "—"],
         ["Vendedor", pedido.vendedor ?? ""],
         ["Prioridade", pedido.prioridade === "urgente" ? "Urgente" : "Normal"],
       ],
