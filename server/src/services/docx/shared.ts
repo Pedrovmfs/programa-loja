@@ -433,6 +433,12 @@ export function totalBox(label: string, value: string | number) {
 // célula): colar uma imagem dentro de uma célula com margin-bottom grande
 // empurra o texto/label pra baixo junto da imagem em vez de ficar por trás
 // dela — com parágrafos reais, a imagem simplesmente ocupa o espaço deles.
+//
+// Altura EXACT (não ATLEAST): com ATLEAST a linha crescia pra caber a
+// imagem colada, empurrando o label e todo o conteúdo depois da caixa pra
+// baixo na página. Com EXACT a caixa tem tamanho fixo — colar uma imagem
+// maior só extrapola visualmente a caixa, mas não desloca o resto do
+// documento.
 export function pasteBox(width: number, label: string) {
   const filler = [spacer(160), spacer(160)];
   return new Table({
@@ -448,7 +454,7 @@ export function pasteBox(width: number, label: string) {
     },
     rows: [
       new TableRow({
-        height: { value: 1300, rule: HeightRule.ATLEAST },
+        height: { value: 1300, rule: HeightRule.EXACT },
         children: [
           new TableCell({
             width: { size: width, type: WidthType.DXA },

@@ -1,4 +1,27 @@
-import { db } from "../db.js";
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { db, DOCS_DIR } from "../db.js";
+
+/**
+ * Acha o próximo número de OS livre "de verdade" — não só o próximo valor
+ * do contador, mas o próximo que não tem pasta em DOCS_DIR ainda. Existe
+ * porque a pasta de documentos pode ganhar números por fora do programa
+ * (ex.: um atendente cria a pasta "2" manualmente pra um pedido feito
+ * no papel). Se só confiássemos no contador, o programa poderia atribuir
+ * o mesmo número 2 de novo e os arquivos se misturarem. Cada tentativa já
+ * avança o contador (não fica reprocessando o mesmo número), então na
+ * próxima chamada a busca recomeça de onde parou, não do zero.
+ */
+function proximoNumeroDisponivel(): number {
+  let candidato: number;
+  do {
+    const counter = db
+      .prepare("UPDATE counters SET value = value + 1 WHERE name = 'os' RETURNING value")
+      .get() as { value: number };
+    candidato = counter.value;
+  } while (existsSync(path.join(DOCS_DIR, String(candidato))));
+  return candidato;
+}
 
 /**
  * Assigns the OS number (only the first time) and refreshes the per-item
@@ -34,10 +57,7 @@ export function finalizarPedido(pedidoId: number): number {
 
     let osNumber = pedido.os_number;
     if (pedido.status !== "finalizado") {
-      const counter = db
-        .prepare("UPDATE counters SET value = value + 1 WHERE name = 'os' RETURNING value")
-        .get() as { value: number };
-      osNumber = counter.value;
+      osNumber = proximoNumeroDisponivel();
 
       db.prepare(
         "UPDATE pedidos SET os_number = ?, status = 'finalizado', finalized_at = datetime('now', 'localtime') WHERE id = ?"
