@@ -31,7 +31,9 @@ export async function gerarDocumentos(
     const [item1, item2] = vestuarioItens;
     const doc = buildFichaTecnicaDuplaDoc(pedido, item1, item2);
     const buffer = await Packer.toBuffer(doc);
-    const fileName = `Ficha_Tecnica_${subOsLabel(osNumber, item1.sub_os as number)}_${subOsLabel(osNumber, item2.sub_os as number)}.docx`;
+    // Um documento só cobrindo os 2 modelos — não faz sentido nomear com
+    // "x.1_x.2" como se fossem duas fichas separadas.
+    const fileName = `Ficha_Tecnica_${osNumber}.docx`;
     writeFileSync(path.join(dir, fileName), buffer);
     setItemDocxPath(item1.id, path.join(String(osNumber), fileName));
     setItemDocxPath(item2.id, path.join(String(osNumber), fileName));
