@@ -240,7 +240,10 @@ ipcMain.handle("test-connection", async (_event, address) => {
 });
 
 ipcMain.handle("save-config", async (_event, config) => {
-  writeConfig(userDataDir, config);
+  // updateConfig (mescla) em vez de writeConfig (sobrescreve): preserva
+  // outras chaves que já possam existir no arquivo, como o "updateCheck"
+  // restaurado por "Alterar modo de conexão" (ver comentário lá).
+  updateConfig(userDataDir, config);
   await launchMainWindow(config);
 });
 
@@ -392,7 +395,14 @@ function buildMenu(win, config) {
           message: "Isso vai fechar o programa para reconfigurar (computador principal ou conectar a outro).",
         });
         if (confirmed.response === 1) {
+          // clearConfig apaga o arquivo inteiro (é a intenção: resetar tudo
+          // pra reconfigurar do zero). Só a memória de checagem de
+          // atualização não tem nada a ver com modo de conexão — preserva
+          // ela à parte pra não gerar um aviso de atualização repetido à
+          // toa logo depois de reconfigurar.
+          const updateCheckState = getUpdateCheckState();
           clearConfig(userDataDir);
+          if (Object.keys(updateCheckState).length > 0) setUpdateCheckState(updateCheckState);
           restartApp();
         }
       },
