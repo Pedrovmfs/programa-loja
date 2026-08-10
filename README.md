@@ -78,6 +78,35 @@ Importante: **só o computador "principal" precisa ter Node.js instalado**
 verdade por trás do Electron). Os computadores "cliente" não precisam de
 nada além do `.exe` — só enxergam a tela por rede.
 
+### Solução de problemas — computador "cliente" não conecta no "principal"
+
+**"Nome não encontrado" ao testar conexão pelo nome do computador**
+(ex.: `SERVIDOR`): o nome de rede (NetBIOS/hostname do Windows) só resolve
+entre PCs se a "Descoberta de Rede" estiver ativada e a rede marcada como
+"Privada" — em muitas lojas isso está desligado. Solução: usar o IP local
+do computador principal em vez do nome (a tela de configuração já mostra
+esse IP como alternativa). Para descobrir manualmente, no Prompt de
+Comando do computador principal:
+
+```
+ipconfig | findstr /C:"adapter" /C:"IPv4"
+```
+
+Ignore linhas de adaptadores "VirtualBox", "VPN", "Bluetooth", "Hyper-V" ou
+"vEthernet" — o IP certo é o que aparece embaixo do adaptador Wi-Fi ou
+Ethernet realmente conectado.
+
+**"Tempo esgotado" ao testar conexão com o IP correto**: geralmente é o
+Firewall do Windows bloqueando a porta 4000 no computador principal (ele
+não pede permissão automaticamente em toda configuração de rede). No
+Prompt de Comando do computador principal, **como Administrador**:
+
+```
+netsh advfirewall firewall add rule name="Attual Pedidos" dir=in action=allow protocol=TCP localport=4000
+```
+
+Depois disso, testar a conexão de novo no computador cliente.
+
 ### Gerando o instalador Windows (.exe)
 
 Empacotar para Windows exige ferramentas específicas (rcedit via Wine) que
