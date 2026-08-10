@@ -23,9 +23,36 @@ try {
 }
 
 let checagemManualEmAndamento = false;
+let checagemEmAndamento = false;
+// Guarda a atualização já baixada esperando confirmação pra instalar. Some
+// se o processo for encerrado de verdade (não sobrevive a um app.relaunch);
+// existe só pra restartApp() saber, DENTRO da mesma execução, se precisa
+// instalar a atualização em vez de simplesmente reiniciar por cima dela.
+let atualizacaoBaixada = null;
+
+// "lastCheckedAt"/"lastNotifiedVersion" ficam salvos no config.json (não só
+// em memória) porque cada "Escolher Pasta de Dados" ou "Alterar modo de
+// conexão" reinicia o processo inteiro — sem persistir em disco, cada
+// reinício perderia essa memória e voltaria a checar/avisar do zero,
+// gerando o aviso repetido várias vezes numa mesma sessão de configuração.
+function getUpdateCheckState() {
+  return readConfig(userDataDir)?.updateCheck ?? {};
+}
+function setUpdateCheckState(partial) {
+  updateConfig(userDataDir, { updateCheck: { ...getUpdateCheckState(), ...partial } });
+}
 
 if (autoUpdater) {
   autoUpdater.on("update-available", async (info) => {
+    checagemEmAndamento = false;
+    const manual = checagemManualEmAndamento;
+    checagemManualEmAndamento = false;
+    // Numa checagem silenciosa (não manual), se já avisamos dessa mesma
+    // versão antes (e o usuário respondeu "Depois"), não insiste sozinho de
+    // novo — só quem pede "Verificar Atualizações" manualmente força o aviso.
+    if (!manual && getUpdateCheckState().lastNotifiedVersion === info.version) return;
+    setUpdateCheckState({ lastNotifiedVersion: info.version });
+
     const resultado = await dialog.showMessageBox({
       type: "info",
       title: "Atualização disponível",
@@ -35,12 +62,11 @@ if (autoUpdater) {
     });
     if (resultado.response === 0) {
       autoUpdater.downloadUpdate().catch((err) => console.error("Erro ao baixar atualização:", err));
-    } else {
-      checagemManualEmAndamento = false;
     }
   });
 
   autoUpdater.on("update-not-available", () => {
+    checagemEmAndamento = false;
     if (checagemManualEmAndamento) {
       dialog.showMessageBox({
         type: "info",
@@ -52,6 +78,7 @@ if (autoUpdater) {
   });
 
   autoUpdater.on("error", (err) => {
+    checagemEmAndamento = false;
     console.error("Erro no auto-update:", err);
     if (checagemManualEmAndamento) {
       dialog.showMessageBox({
@@ -64,6 +91,7 @@ if (autoUpdater) {
   });
 
   autoUpdater.on("update-downloaded", async (info) => {
+    atualizacaoBaixada = info;
     const resultado = await dialog.showMessageBox({
       type: "info",
       title: "Atualização pronta",
@@ -72,8 +100,13 @@ if (autoUpdater) {
       message: `A versão ${info.version} foi baixada.\n\nReiniciar agora pra instalar? (leva poucos segundos)`,
     });
     if (resultado.response === 0) {
+      atualizacaoBaixada = null;
       autoUpdater.quitAndInstall();
     }
+    // Se respondeu "Depois", atualizacaoBaixada continua marcada: um
+    // restartApp() por qualquer outro motivo (trocar pasta, mudar modo de
+    // conexão) vai aproveitar esse reinício pra instalar a atualização em
+    // vez de descartá-la (ver comentário em restartApp).
   });
 }
 
@@ -88,9 +121,25 @@ function verificarAtualizacoes({ manual }) {
     }
     return;
   }
+  if (atualizacaoBaixada) {
+    if (manual) {
+      dialog.showMessageBox({
+        type: "info",
+        title: "Atualização pronta",
+        message: `A versão ${atualizacaoBaixada.version} já foi baixada e está esperando pra instalar. Feche e abra o programa de novo (ou Configurações → Sair) pra aplicar.`,
+      });
+    }
+    return;
+  }
+  if (checagemEmAndamento) return;
+  if (!manual && Date.now() - (getUpdateCheckState().lastCheckedAt ?? 0) < 10 * 60 * 1000) return;
+
+  checagemEmAndamento = true;
   if (manual) checagemManualEmAndamento = true;
+  else setUpdateCheckState({ lastCheckedAt: Date.now() });
   autoUpdater.checkForUpdates().catch((err) => {
     console.error("Erro ao checar atualização:", err);
+    checagemEmAndamento = false;
     checagemManualEmAndamento = false;
   });
 }
@@ -388,6 +437,18 @@ function restartApp() {
   if (serverProcess) {
     serverProcess.kill();
     serverProcess = null;
+  }
+  if (atualizacaoBaixada) {
+    // Tinha uma atualização baixada esperando confirmação. Se a gente só
+    // desse app.relaunch()+app.exit() aqui, o Electron reabre o executável
+    // ANTIGO na hora — mais rápido do que o instalador (que roda em segundo
+    // plano) trocar os arquivos — dando a impressão de que "atualizei mas
+    // voltou pra versão antiga". quitAndInstall(true, true) resolve os dois
+    // de uma vez: instala a atualização de verdade E só então reabre o
+    // programa, já na versão nova e com a config nova que acabou de ser
+    // gravada em disco.
+    autoUpdater.quitAndInstall(true, true);
+    return;
   }
   app.relaunch();
   app.exit(0);
