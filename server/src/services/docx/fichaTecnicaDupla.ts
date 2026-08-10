@@ -3,7 +3,7 @@
 // único documento com um bloco completo por modelo, sem Capa Resumo
 // embutida (os dados do pedido já ficam no topo). Baseado na "Opção 2"
 // aprovada e guardada em docs/opcoes-ficha-tecnica/.
-import { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, ShadingType, HeightRule } from "docx";
+import { Document, Paragraph, TextRun, Table } from "docx";
 import type { Item, Pedido } from "../../types.js";
 import {
   VESTUARIO_MODELOS,
@@ -18,44 +18,6 @@ import {
 import * as S from "./shared.js";
 import { loadLogoBuffer } from "./logo.js";
 import { materialCaption } from "./fichaTecnica.js";
-
-function pasteBox(width: number, label: string) {
-  const filler = [S.spacer(160), S.spacer(160)];
-  return new Table({
-    width: { size: width, type: WidthType.DXA },
-    columnWidths: [width],
-    borders: {
-      top: S.thinBorder(),
-      bottom: S.thinBorder(),
-      left: S.thinBorder(),
-      right: S.thinBorder(),
-      insideHorizontal: S.thinBorder(),
-      insideVertical: S.thinBorder(),
-    },
-    rows: [
-      new TableRow({
-        height: { value: 1300, rule: HeightRule.ATLEAST },
-        children: [
-          new TableCell({
-            width: { size: width, type: WidthType.DXA },
-            shading: { type: ShadingType.CLEAR, fill: S.GRAY_BAND, color: "auto" },
-            margins: { top: 80, bottom: 80, left: 100, right: 100 },
-            borders: S.cellBorders(),
-            children: [
-              new Paragraph({
-                spacing: { after: 60 },
-                children: [
-                  new TextRun({ text: label, bold: true, size: 13, color: S.INK, font: "Arial", characterSpacing: 3 }),
-                ],
-              }),
-              ...filler,
-            ],
-          }),
-        ],
-      }),
-    ],
-  });
-}
 
 function modeloBlock(numero: number, letra: string, item: Item) {
   const campos = MODELO_CAMPOS[item.produto as keyof typeof MODELO_CAMPOS] ?? { gola: true, manga: true, punho: true };
@@ -160,8 +122,8 @@ export function buildFichaTecnicaDuplaDoc(pedido: Pedido, item1: Item, item2: It
   const metadeArte = S.halfWidth();
   children.push(
     S.sideBySide(
-      [pasteBox(metadeArte, "MODELO A — COLE A ARTE AQUI (FRENTE E COSTAS)")],
-      [pasteBox(metadeArte, "MODELO B — COLE A ARTE AQUI (FRENTE E COSTAS)")]
+      [S.pasteBox(metadeArte, "MODELO A — COLE A ARTE AQUI (FRENTE E COSTAS)")],
+      [S.pasteBox(metadeArte, "MODELO B — COLE A ARTE AQUI (FRENTE E COSTAS)")]
     )
   );
   children.push(S.spacer(110));

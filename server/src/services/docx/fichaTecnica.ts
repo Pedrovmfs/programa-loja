@@ -1,4 +1,4 @@
-import { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, ShadingType } from "docx";
+import { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType } from "docx";
 import type { Item, Pedido } from "../../types.js";
 import {
   VESTUARIO_MODELOS,
@@ -157,38 +157,7 @@ export function buildFichaTecnicaDoc(pedido: Pedido, item: Item): Document {
   // 6. ARTE / ESTAMPA
   children.push(S.sectionBanner("6. Arte / Estampa"));
   children.push(S.spacer(140));
-  children.push(
-    new Table({
-      width: { size: S.CONTENT_WIDTH_DXA, type: WidthType.DXA },
-      columnWidths: [S.CONTENT_WIDTH_DXA / 2, S.CONTENT_WIDTH_DXA / 2],
-      borders: {
-        top: S.thinBorder(),
-        bottom: S.thinBorder(),
-        left: S.thinBorder(),
-        right: S.thinBorder(),
-        insideHorizontal: S.thinBorder(),
-        insideVertical: S.thinBorder(),
-      },
-      rows: [
-        new TableRow({
-          children: ["FRENTE", "COSTAS"].map(
-            (label) =>
-              new TableCell({
-                width: { size: S.CONTENT_WIDTH_DXA / 2, type: WidthType.DXA },
-                shading: { type: ShadingType.CLEAR, fill: S.GRAY_BAND, color: "auto" },
-                margins: { top: 70, bottom: 900, left: 100, right: 100 },
-                borders: S.cellBorders(),
-                children: [
-                  new Paragraph({
-                    children: [new TextRun({ text: label, bold: true, size: 17, color: S.INK, font: "Arial" })],
-                  }),
-                ],
-              })
-          ),
-        }),
-      ],
-    })
-  );
+  children.push(S.pasteBox(S.CONTENT_WIDTH_DXA, "COLE A ARTE AQUI (FRENTE E COSTAS)"));
   children.push(S.spacer(130));
 
   // 7. OBSERVAÇÕES IMPORTANTES

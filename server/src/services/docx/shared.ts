@@ -11,6 +11,7 @@ import {
   ImageRun,
   VerticalAlign,
   IBorderOptions,
+  HeightRule,
 } from "docx";
 
 // ---------- Color tokens (identidade visual da Attual) ----------
@@ -419,6 +420,47 @@ export function totalBox(label: string, value: string | number) {
                   new TextRun({ text: String(value), bold: true, size: 24, color: ORANGE_DARK, font: "Arial" }),
                 ],
               }),
+            ],
+          }),
+        ],
+      }),
+    ],
+  });
+}
+
+// ---------- Caixa de colar arte (imagem) ----------
+// Usa parágrafos em branco de verdade como espaço reservado (não margem de
+// célula): colar uma imagem dentro de uma célula com margin-bottom grande
+// empurra o texto/label pra baixo junto da imagem em vez de ficar por trás
+// dela — com parágrafos reais, a imagem simplesmente ocupa o espaço deles.
+export function pasteBox(width: number, label: string) {
+  const filler = [spacer(160), spacer(160)];
+  return new Table({
+    width: { size: width, type: WidthType.DXA },
+    columnWidths: [width],
+    borders: {
+      top: thinBorder(),
+      bottom: thinBorder(),
+      left: thinBorder(),
+      right: thinBorder(),
+      insideHorizontal: thinBorder(),
+      insideVertical: thinBorder(),
+    },
+    rows: [
+      new TableRow({
+        height: { value: 1300, rule: HeightRule.ATLEAST },
+        children: [
+          new TableCell({
+            width: { size: width, type: WidthType.DXA },
+            shading: { type: ShadingType.CLEAR, fill: GRAY_BAND, color: "auto" },
+            margins: { top: 80, bottom: 80, left: 100, right: 100 },
+            borders: cellBorders(),
+            children: [
+              new Paragraph({
+                spacing: { after: 60 },
+                children: [new TextRun({ text: label, bold: true, size: 13, color: INK, font: "Arial", characterSpacing: 3 })],
+              }),
+              ...filler,
             ],
           }),
         ],
