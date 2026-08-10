@@ -164,6 +164,22 @@ function findNodeExecutable() {
 
 ipcMain.handle("get-hostname", () => os.hostname());
 
+// O nome do computador (via NetBIOS) só resolve entre PCs se "Descoberta de
+// Rede" estiver ativada no Windows e a rede estiver como "Privada" — em
+// muitas lojas isso não está configurado, e o nome simplesmente não é
+// encontrado no outro PC. O IP local funciona independente disso, então
+// mostramos ele como alternativa mais confiável.
+ipcMain.handle("get-lan-ips", () => {
+  const interfaces = os.networkInterfaces();
+  const ips = [];
+  for (const addrs of Object.values(interfaces)) {
+    for (const addr of addrs ?? []) {
+      if (addr.family === "IPv4" && !addr.internal) ips.push(addr.address);
+    }
+  }
+  return ips;
+});
+
 ipcMain.handle("test-connection", async (_event, address) => {
   try {
     const base = normalizeAddress(address);

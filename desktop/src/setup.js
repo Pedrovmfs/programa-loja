@@ -3,6 +3,7 @@ const optCliente = document.getElementById("opt-cliente");
 const principalCard = document.getElementById("principal-card");
 const clienteCard = document.getElementById("cliente-card");
 const hostnameValue = document.getElementById("hostname-value");
+const ipValue = document.getElementById("ip-value");
 const addressInput = document.getElementById("address");
 const testBtn = document.getElementById("test-btn");
 const statusEl = document.getElementById("status");
@@ -13,6 +14,10 @@ let clienteTested = false;
 
 window.attualSetup.getHostname().then((hostname) => {
   hostnameValue.textContent = hostname;
+});
+
+window.attualSetup.getLanIps().then((ips) => {
+  ipValue.textContent = ips.length > 0 ? ips.join(" ou ") : "não encontrado (verifique se está conectado à rede)";
 });
 
 function selectMode(newMode) {
