@@ -1,0 +1,67 @@
+name: Build Desktop (Windows)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "**"
+    paths:
+      - "server/**"
+      - "web/**"
+      - "desktop/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/build-desktop.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Compilar backend e frontend
+        run: npm run build
+
+      - name: Empacotar backend para o Electron
+        run: npm run bundle --workspace desktop
+
+      # Versão única e sempre crescente (0.1.<número da execução>), pra o
+      # auto-update sempre reconhecer o build mais recente como "mais novo"
+      # sem precisar bump manual de versão a cada push.
+      - name: Definir versão do build
+        shell: bash
+        run: npm version "0.1.${{ github.run_number }}" --no-git-tag-version --prefix desktop
+
+      # Só publica Release de verdade (que o auto-update dos PCs vai enxergar)
+      # quando o push é na branch main. Push em qualquer outra branch (ex.:
+      # trabalho ainda em andamento) só gera o instalador como artefato do
+      # build, sem tocar em Release nenhuma — evita que um commit ainda não
+      # testado vire "a versão mais nova" pro programa já instalado na loja.
+      - name: Gerar instalador Windows (.exe) e publicar Release no GitHub (só na main)
+        shell: bash
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            npm run dist --workspace desktop -- --win --x64 --publish always
+          else
+            npm run dist --workspace desktop -- --win --x64 --publish never
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publicar .exe também como artefato do build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Attual-Programa-de-Pedidos-Windows
+          path: |
+            desktop/release/*.exe
+          if-no-files-found: error

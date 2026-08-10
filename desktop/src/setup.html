@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Configuração — Attual Pedidos</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: #f4f4f5;
+        color: #1c1c1e;
+        padding: 32px;
+      }
+      h1 { font-size: 20px; margin: 0 0 4px; }
+      p.sub { color: #52525b; margin: 0 0 24px; font-size: 14px; }
+      .options { display: flex; gap: 16px; margin-bottom: 20px; }
+      .option {
+        flex: 1;
+        border: 2px solid #d4d4d8;
+        border-radius: 10px;
+        padding: 18px;
+        cursor: pointer;
+        background: white;
+      }
+      .option.selected { border-color: #e8590c; background: #fff4ec; }
+      .option h2 { font-size: 15px; margin: 0 0 6px; }
+      .option p { font-size: 13px; color: #52525b; margin: 0; }
+      .card {
+        background: white;
+        border: 1px solid #e4e4e7;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+      .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+      .field label { font-size: 13px; font-weight: 600; }
+      .field input {
+        padding: 9px 10px;
+        border: 1px solid #d4d4d8;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+      .row { display: flex; gap: 10px; align-items: center; }
+      button {
+        border: none;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.primary { background: #e8590c; color: white; }
+      button.secondary { background: #e4e4e7; color: #1c1c1e; }
+      button:disabled { background: #d4d4d8; cursor: not-allowed; }
+      .status { font-size: 13px; margin-top: 8px; }
+      .status.ok { color: #15803d; }
+      .status.error { color: #b91c1c; }
+      .actions { display: flex; justify-content: flex-end; margin-top: 20px; }
+      .hidden { display: none; }
+    </style>
+  </head>
+  <body>
+    <h1>Configuração inicial — Attual Programa de Pedidos</h1>
+    <p class="sub">Isso só aparece uma vez neste computador. Depois de configurar, o programa abre direto.</p>
+
+    <div class="options">
+      <div class="option" id="opt-principal">
+        <h2>💻 Este é o computador principal</h2>
+        <p>Os pedidos e documentos ficam salvos aqui. Escolha isso no computador que fica sempre ligado na loja.</p>
+      </div>
+      <div class="option" id="opt-cliente">
+        <h2>🔗 Vou conectar a outro computador</h2>
+        <p>Os pedidos ficam salvos no computador principal — este aqui só vai usar o programa por rede.</p>
+      </div>
+    </div>
+
+    <div class="card hidden" id="principal-card">
+      <p>
+        O nome deste computador na rede é <strong id="hostname-value">—</strong>.
+        Anote isso: é o que você vai digitar nos outros computadores da loja
+        para conectá-los a este.
+      </p>
+    </div>
+
+    <div class="card hidden" id="cliente-card">
+      <div class="field">
+        <label>Endereço do computador principal</label>
+        <input id="address" type="text" placeholder="ex: PC-PRINCIPAL ou 192.168.0.50" />
+      </div>
+      <div class="row">
+        <button class="secondary" id="test-btn">Testar Conexão</button>
+        <span class="status" id="status"></span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="save-btn" disabled>Salvar e Continuar</button>
+    </div>
+
+    <script src="setup.js"></script>
+  </body>
+</html>

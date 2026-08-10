@@ -1,0 +1,18 @@
+node_modules/
+dist/
+build/
+*.log
+
+# runtime data (db + generated docs) — must persist on the store PC but not in git
+server/data/*.db
+server/data/*.db-journal
+server/data/*.db-wal
+server/data/*.db-shm
+server/data/documentos/
+
+.env
+.DS_Store
+
+# artefatos gerados do app desktop (bundle + instalador), não versionados
+desktop/resources/
+desktop/release/

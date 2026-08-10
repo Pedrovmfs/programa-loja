@@ -1,0 +1,120 @@
+import { useState } from "react";
+import { ListChecks, Shirt, Pencil, Trash2 } from "lucide-react";
+import { api, ApiError } from "../api";
+import type { Item } from "../types";
+import { SectionTitle } from "../components/SectionTitle";
+import { EmptyState } from "../components/EmptyState";
+
+function resumo(item: Item): string {
+  if (item.categoria === "brinde") {
+    return `${item.tamanho_detalhe ? item.tamanho_detalhe + " — " : ""}Qtd: ${item.quantidade}`;
+  }
+  const adulto = [
+    item.grade_adulto_pp && `PP:${item.grade_adulto_pp}`,
+    item.grade_adulto_p && `P:${item.grade_adulto_p}`,
+    item.grade_adulto_m && `M:${item.grade_adulto_m}`,
+    item.grade_adulto_g && `G:${item.grade_adulto_g}`,
+    item.grade_adulto_gg && `GG:${item.grade_adulto_gg}`,
+  ].filter(Boolean);
+  const infantil = [
+    item.grade_infantil_2 && `2:${item.grade_infantil_2}`,
+    item.grade_infantil_4 && `4:${item.grade_infantil_4}`,
+    item.grade_infantil_6 && `6:${item.grade_infantil_6}`,
+    item.grade_infantil_8 && `8:${item.grade_infantil_8}`,
+    item.grade_infantil_10 && `10:${item.grade_infantil_10}`,
+  ].filter(Boolean);
+  return [...adulto, ...infantil].join(", ") || "—";
+}
+
+export function ItensList({
+  pedidoId,
+  itens,
+  editingItemId,
+  justAddedId,
+  onRemoved,
+  onEdit,
+}: {
+  pedidoId: number;
+  itens: Item[];
+  editingItemId?: number | null;
+  justAddedId?: number | null;
+  onRemoved: (itemId: number) => void;
+  onEdit: (item: Item) => void;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<number | null>(null);
+
+  async function handleRemove(itemId: number) {
+    setError(null);
+    setRemovingId(itemId);
+    try {
+      await api.removeItem(pedidoId, itemId);
+      onRemoved(itemId);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Erro ao remover item");
+    } finally {
+      setRemovingId(null);
+    }
+  }
+
+  return (
+    <div className="card">
+      <SectionTitle icon={ListChecks}>3. Itens do Pedido</SectionTitle>
+      {error && <div className="alert error">{error}</div>}
+      {itens.length === 0 ? (
+        <EmptyState
+          icon={Shirt}
+          title="Nenhum item adicionado ainda."
+          subtitle="Adicione itens ao pedido usando o formulário acima."
+        />
+      ) : (
+        <table className="itens-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Categoria</th>
+              <th>Produto</th>
+              <th>Grade / Quantidade</th>
+              <th>Observação</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {itens.map((item, idx) => (
+              <tr
+                key={item.id}
+                className={[
+                  editingItemId === item.id ? "editing" : "",
+                  justAddedId === item.id ? "just-added" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                <td>{idx + 1}</td>
+                <td>
+                  <span className={`badge ${item.categoria}`}>{item.categoria}</span>
+                </td>
+                <td>{item.produto}</td>
+                <td>{resumo(item)}</td>
+                <td>{item.observacao}</td>
+                <td className="row-actions">
+                  <button type="button" className="link-edit" onClick={() => onEdit(item)}>
+                    <Pencil size={13} /> Editar
+                  </button>
+                  <button
+                    type="button"
+                    className="link-danger"
+                    disabled={removingId === item.id}
+                    onClick={() => handleRemove(item.id)}
+                  >
+                    <Trash2 size={13} /> {removingId === item.id ? "Removendo..." : "Remover"}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,37 @@
+ATTUAL CAMISETAS - PROGRAMA DE LANCAMENTO DE PEDIDOS
+=====================================================
+
+AVISO: se voce recebeu um arquivo unico ".exe" (em vez desta pasta com
+varios arquivos), ignore o restante deste texto - e so dar dois cliques
+nesse .exe, sem instalar nada. Esta pasta com instalar.bat/iniciar.bat e
+uma forma alternativa mais simples de gerar, usada durante o
+desenvolvimento.
+
+
+COMO INSTALAR (fazer uma unica vez neste computador):
+
+1. Instalar o Node.js, se ainda nao tiver: baixar em https://nodejs.org
+   (escolher a versao "LTS") e instalar normalmente (Avancar, Avancar,
+   Concluir).
+
+2. Dar dois cliques no arquivo "instalar.bat" desta pasta e esperar
+   terminar (pode demorar alguns minutos). Se aparecer algum erro em
+   vermelho, tire um print e mande pra quem configurou o programa.
+
+
+COMO USAR NO DIA A DIA:
+
+1. Dar dois cliques no arquivo "iniciar.bat".
+2. O programa abre sozinho no navegador.
+3. Para ENCERRAR, feche a janela preta chamada
+   "Attual - Servidor" (nao a janela do navegador).
+
+
+ONDE FICAM OS PEDIDOS E OS DOCUMENTOS GERADOS:
+
+Tudo fica salvo dentro da pasta "server\data" desta mesma pasta do
+programa. Se quiser fazer backup, basta copiar essa pasta "data" para
+um pendrive ou nuvem de tempos em tempos.
+
+NAO apague a pasta "server\data" - e onde ficam todos os pedidos ja
+lancados.
