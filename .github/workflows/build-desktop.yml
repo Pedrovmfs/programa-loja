@@ -42,8 +42,19 @@ jobs:
         shell: bash
         run: npm version "0.1.${{ github.run_number }}" --no-git-tag-version --prefix desktop
 
-      - name: Gerar instalador Windows (.exe) e publicar Release no GitHub
-        run: npm run dist --workspace desktop -- --win --x64 --publish always
+      # Só publica Release de verdade (que o auto-update dos PCs vai enxergar)
+      # quando o push é na branch main. Push em qualquer outra branch (ex.:
+      # trabalho ainda em andamento) só gera o instalador como artefato do
+      # build, sem tocar em Release nenhuma — evita que um commit ainda não
+      # testado vire "a versão mais nova" pro programa já instalado na loja.
+      - name: Gerar instalador Windows (.exe) e publicar Release no GitHub (só na main)
+        shell: bash
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            npm run dist --workspace desktop -- --win --x64 --publish always
+          else
+            npm run dist --workspace desktop -- --win --x64 --publish never
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

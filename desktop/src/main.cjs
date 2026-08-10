@@ -301,8 +301,7 @@ async function handleEscolherPastaDeDados(win, config) {
       fs.cpSync(atual, novaPasta, { recursive: true });
     }
     updateConfig(userDataDir, { dataDir: novaPasta });
-    app.relaunch();
-    app.exit(0);
+    restartApp();
   } catch (err) {
     await dialog.showMessageBox(win, {
       type: "error",
@@ -329,8 +328,7 @@ function buildMenu(win, config) {
         });
         if (confirmed.response === 1) {
           clearConfig(userDataDir);
-          app.relaunch();
-          app.exit(0);
+          restartApp();
         }
       },
     },
@@ -364,3 +362,17 @@ app.on("window-all-closed", () => {
 app.on("before-quit", () => {
   if (serverProcess) serverProcess.kill();
 });
+
+// app.exit() (usado pra reiniciar depois de mudar pasta de dados/modo de
+// conexão) NÃO dispara "before-quit" — se não matarmos o backend aqui, ele
+// continua rodando na porta 4000 apontando pra config antiga, e a instância
+// relançada acaba conversando com esse processo "fantasma" em vez de subir
+// um novo com a config atualizada.
+function restartApp() {
+  if (serverProcess) {
+    serverProcess.kill();
+    serverProcess = null;
+  }
+  app.relaunch();
+  app.exit(0);
+}

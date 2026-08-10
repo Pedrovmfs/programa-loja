@@ -54,10 +54,18 @@ export function startServer(opts: StartServerOptions = {}): Promise<Server> {
   // permite outros computadores da loja acharem este servidor pela rede
   // quando ele for o computador "principal".
   const host = opts.host ?? "0.0.0.0";
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const server = app.listen(port, host, () => {
       console.log(`Servidor rodando em http://localhost:${port}`);
       resolve(server);
+    });
+    server.on("error", (err: NodeJS.ErrnoException) => {
+      if (err.code === "EADDRINUSE") {
+        console.error(`Porta ${port} já está em uso (provavelmente outro processo do servidor ainda rodando).`);
+      } else {
+        console.error("Erro ao iniciar o servidor:", err);
+      }
+      reject(err);
     });
   });
 }
@@ -67,5 +75,5 @@ export function startServer(opts: StartServerOptions = {}): Promise<Server> {
 // importar este módulo, para chamar startServer() ele mesmo com as opções
 // certas (modo principal/cliente) em vez de deixar isto auto-iniciar.
 if (!process.env.ATTUAL_NO_AUTOSTART) {
-  startServer();
+  startServer().catch(() => process.exit(1));
 }
