@@ -13,9 +13,14 @@ Artefatos já publicados:
 - Sem estoque automático de verdade — só um marcador simples "tem/não tem material".
 - Fases fixas pra começar. Roteiro configurável = ideal futuro, não essencial agora.
 
-## Arquitetura (Attual Camisetas)
-- **Mesmo repositório do Attual Pedidos**, porque a OP precisa nascer automaticamente a partir dos dados de pedido/item que já existem aqui.
-- Repo separado só faria sentido com banco compartilhado entre dois códigos (mais atrito) — descartado.
+## Arquitetura
+**Decisão atual (substitui a anterior):** código **universal, em repositório novo**, sem depender do `programa-loja`.
+- O mesmo produto atende as malharias e a Attual Camisetas. Criar OP manualmente é o caminho padrão.
+- Pra Attual: oferecer a versão universal primeiro. Se recusarem (querendo a OP nascendo do pedido), integra depois com o `programa-loja`.
+- Pra integrar depois sem dor, desde o início:
+  - toda criação de OP passa por uma única função/endpoint (`criarOP`), que a UI usa hoje e uma integração pode chamar amanhã;
+  - a OP tem campos opcionais `origem` e `ref_externa` (ex.: id do pedido no Attual Pedidos), pra rastrear de onde veio e evitar duplicata.
+- *Decisão anterior (descartada):* morar dentro do `programa-loja` pra ler pedido/item direto.
 
 ## Novos interessados: duas malharias
 - Uma da família (tia/tio) e outra (tio/primo), vizinhas uma da outra.
